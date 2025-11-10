@@ -1,0 +1,193 @@
+---
+interface Props {
+  author: string;
+  content: string;
+  depth: number;
+  reactions?: string[];
+  timestamp?: string;
+}
+
+const {
+  author,
+  content,
+  depth,
+  reactions = [],
+  timestamp = "1 hour ago",
+} = Astro.props;
+
+// Render @mentions as styled links
+const renderContent = (text: string) => {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("@")) {
+      return { type: "mention", text: part, key: i };
+    }
+    return { type: "text", text: part, key: i };
+  });
+};
+
+const contentParts = renderContent(content);
+---
+
+<div
+  class="comment-container not-content"
+  style={`margin-left: ${depth * 24}px`}
+>
+  <!-- Header: Author and timestamp -->
+  <div class="comment-header">
+    <div class="avatar">
+      {author.charAt(0).toUpperCase()}
+    </div>
+    <div>
+      <span class="author-name">{author}</span>
+      <span class="separator">•</span>
+      <span class="timestamp">{timestamp}</span>
+      {depth > 0 && <span class="depth-indicator">↳ Reply</span>}
+    </div>
+  </div>
+
+  <!-- Comment content with @mentions -->
+  <div class="comment-content">
+    {
+      contentParts.map((part) =>
+        part.type === "mention" ? (
+          <a href="#" class="mention">
+            {part.text}
+          </a>
+        ) : (
+          <span>{part.text}</span>
+        ),
+      )
+    }
+  </div>
+
+  <!-- Optional reactions -->
+  {
+    reactions.length > 0 && (
+      <div class="reactions">
+        {reactions.map((emoji, i) => (
+          <button class={`reaction-button ${i === 0 ? "highlighted" : ""}`}>
+            <span>{emoji}</span>
+            <span class="count">{Math.floor(Math.random() * 5) + 1}</span>
+          </button>
+        ))}
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .comment-container {
+    border: 1px solid var(--sl-color-hairline-light);
+    border-radius: 8px;
+    padding: 12px;
+    background-color: var(--sl-color-black);
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    max-width: 600px;
+    margin: 8px auto;
+  }
+
+  .comment-container[style*="margin-left"] {
+    margin-left: calc(8px + var(--depth-offset, 0px));
+    margin-right: 8px;
+  }
+
+  .comment-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+
+  .avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--sl-color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sl-color-text-invert);
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .author-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--sl-color-text);
+  }
+
+  .separator {
+    color: var(--sl-color-hairline-light);
+    padding: 0 4px;
+  }
+
+  .timestamp {
+    font-size: 12px;
+    color: var(--sl-color-gray-3);
+  }
+
+  .depth-indicator {
+    font-size: 11px;
+    color: var(--sl-color-accent);
+    margin-left: 4px;
+    font-weight: 500;
+  }
+
+  .comment-content {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--sl-color-text);
+    margin-bottom: 8px;
+    padding-left: 32px;
+  }
+
+  .mention {
+    color: var(--sl-color-accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .mention:hover {
+    text-decoration: underline;
+  }
+
+  .reactions {
+    display: flex;
+    gap: 6px;
+    margin-left: 32px;
+    flex-wrap: wrap;
+  }
+
+  .reaction-button {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border: 1px solid var(--sl-color-hairline-light);
+    border-radius: 12px;
+    background-color: var(--sl-color-black);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+
+  .reaction-button.highlighted {
+    background-color: var(--sl-color-accent-low);
+  }
+
+  .reaction-button:hover {
+    background-color: var(--sl-color-accent-low);
+    border-color: var(--sl-color-accent);
+  }
+
+  .count {
+    font-size: 11px;
+    color: var(--sl-color-gray-3);
+  }
+</style>
