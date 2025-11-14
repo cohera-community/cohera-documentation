@@ -330,6 +330,82 @@ The Posts module integrates with Cohera's role system. By default, these permiss
 
 You can customize these permissions using the `roles` configuration option.
 
+#### `visibility`
+
+Configure post visibility levels to control who can see posts across your instance and federated network.
+
+**Type:** `object`
+
+**Properties:**
+
+- `defaultLevel` (string, default: 'public') - Default visibility level for new posts
+- `allowUserChoice` (boolean, default: true) - Allow users to choose visibility when creating posts
+- `enableFederation` (boolean, default: false) - Enable ActivityPub federation for public posts
+
+**Default:**
+
+```js
+visibility: {
+  defaultLevel: 'public',
+  allowUserChoice: true,
+  enableFederation: false,
+}
+```
+
+**Visibility Levels:**
+
+The Posts module supports three visibility levels that control post access:
+
+1. **Public & Federated** - Post is visible to everyone and shared across federated instances via ActivityPub
+   - Visible to all users on your instance
+   - Shared with other instances in the federation network
+   - Appears in public feeds across the fediverse
+   - Requires `enableFederation: true` in configuration
+
+2. **Public (Instance-only)** - Post is visible to everyone on your instance only
+   - Visible to all users on your instance (logged in or not)
+   - Not shared with federated instances
+   - Appears in your instance's public feeds
+   - Default when `enableFederation: false`
+
+3. **Group Private** - Post is visible only to members of specific groups
+   - Only visible to users in designated groups
+   - Not visible in public feeds
+   - Not federated
+   - Requires groups module integration
+
+**Example configuration:**
+
+```js
+visibility: {
+  defaultLevel: 'public', // Start posts as public to instance
+  allowUserChoice: true,  // Let users choose visibility
+  enableFederation: true, // Enable cross-instance federation
+}
+```
+
+**Federation:**
+
+When `enableFederation` is enabled, posts marked as "Public & Federated" are shared using the ActivityPub protocol. This means:
+
+- Posts appear on other Cohera instances and compatible platforms (Mastodon, Pleroma, etc.)
+- Users from other instances can interact with your posts (reactions, comments)
+- Your instance must have ActivityPub configured in the main Cohera settings
+
+**Group Private Posts:**
+
+Group private posts require the Groups module. When creating a post, users can select specific groups that should have access. Only members of those groups will see the post in their feeds or be able to access it directly.
+
+**User Choice:**
+
+When `allowUserChoice` is true, users see visibility options when creating posts:
+
+- "Public & Federated" (if federation is enabled)
+- "Public (Instance-only)" (always available)
+- "Private to groups..." (if groups module is installed)
+
+When `allowUserChoice` is false, all posts use the `defaultLevel` visibility.
+
 ### Custom Fields for Categories
 
 Categories can define custom fields that determine what information users provide when creating posts. This allows you to create structured post types tailored to your community's needs.
