@@ -267,6 +267,69 @@ feed: {
 }
 ```
 
+#### `moderation`
+
+Configure moderation features and permissions for managing post content.
+
+**Type:** `object`
+
+**Properties:**
+
+- `enableReporting` (boolean, default: true) - Allow users to report posts for moderator review
+- `roles` (array, optional) - Define custom roles with moderation permissions
+
+**Default:**
+
+```js
+moderation: {
+  enableReporting: true,
+  roles: [], // Uses default role-based permissions
+}
+```
+
+**Example with custom moderation roles:**
+
+```js
+moderation: {
+  enableReporting: true,
+  roles: [
+    {
+      name: "moderator",
+      permissions: ["remove", "hide", "review_reports"],
+    },
+    {
+      name: "admin",
+      permissions: ["remove", "hide", "review_reports", "manage_categories"],
+    },
+  ],
+}
+```
+
+**Available permissions:**
+
+- `remove` - Permanently delete posts
+- `hide` - Hide posts from public view (soft delete)
+- `review_reports` - Access and act on user-reported content
+- `manage_categories` - Modify category configurations
+
+**Content Reporting:**
+
+When `enableReporting` is true, users can report posts that violate community guidelines. Reported posts appear in the moderation queue for users with the `review_reports` permission. Moderators can then choose to:
+
+- Dismiss the report (no action)
+- Hide the post (temporarily remove from view)
+- Remove the post (permanently delete)
+
+**Role-based Permissions:**
+
+The Posts module integrates with Cohera's role system. By default, these permissions are checked:
+
+- Post authors can always edit or delete their own posts
+- Users with the `moderator` role can hide and review reports
+- Users with the `admin` role have full moderation capabilities
+
+You can customize these permissions using the `roles` configuration option.
+
 ### Custom Fields for Categories
 
 Categories can define custom fields that determine what information users provide when creating posts. This allows you to create structured post types tailored to your community's needs.
