@@ -419,6 +419,148 @@ When `allowUserChoice` is true, users see visibility options when creating posts
 
 When `allowUserChoice` is false, all posts use the `defaultLevel` visibility.
 
+## Moderation & Visibility Usage
+
+This section shows practical examples of using moderation and visibility features in your application code.
+
+### Creating Posts with Specific Visibility
+
+When creating a post programmatically, you can set the visibility level:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Create a public post (instance-only)
+const publicPost = await posts.create({
+  categoryId: "general",
+  title: "Welcome to our community!",
+  content: "Excited to be here and meet everyone.",
+  visibility: "public",
+});
+
+// Create a federated post (shared across instances)
+const federatedPost = await posts.create({
+  categoryId: "announcements",
+  title: "Big news!",
+  content: "Our community is now part of the fediverse!",
+  visibility: "federated",
+});
+
+// Create a group-private post
+const privatePost = await posts.create({
+  categoryId: "general",
+  title: "Team discussion",
+  content: "Let's plan our next meetup.",
+  visibility: "private",
+  groups: ["team-leads", "organizers"],
+});
+```
+
+### Reporting Posts
+
+Users can report posts that violate community guidelines:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Report a post
+await posts.report({
+  postId: "post-123",
+  reason: "spam",
+  details: "This post is advertising unrelated products",
+});
+```
+
+### Moderator Actions
+
+Users with moderation permissions can perform these actions:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Get the moderation queue (requires 'review_reports' permission)
+const reports = await posts.moderation.getReports({
+  status: "pending",
+  limit: 20,
+});
+
+// Review a specific report
+const report = await posts.moderation.getReport("report-456");
+
+// Dismiss a report (no action needed)
+await posts.moderation.dismissReport("report-456", {
+  reason: "Not a violation",
+});
+
+// Hide a post (soft delete - requires 'hide' permission)
+await posts.moderation.hide("post-123", {
+  reason: "Inappropriate content",
+  reportId: "report-456", // Optional: link to report
+});
+
+// Remove a post permanently (requires 'remove' permission)
+await posts.moderation.remove("post-123", {
+  reason: "Spam",
+  reportId: "report-456",
+});
+
+// Restore a hidden post
+await posts.moderation.restore("post-123");
+```
+
+### Checking User Permissions
+
+Before showing moderation UI elements, check if the user has permissions:
+
+```typescript
+import { posts } from "@cohera/posts";
+import { auth } from "@cohera/auth";
+
+const currentUser = await auth.getCurrentUser();
+
+// Check if user can moderate posts
+const canModerate = await posts.moderation.canModerate(currentUser.id);
+
+// Check specific permissions
+const permissions = await posts.moderation.getPermissions(currentUser.id);
+
+if (permissions.includes("review_reports")) {
+  // Show moderation queue link
+}
+
+if (permissions.includes("hide")) {
+  // Show hide post button
+}
+
+if (permissions.includes("remove")) {
+  // Show remove post button
+}
+```
+
+### Filtering Posts by Visibility
+
+When querying posts, the API automatically filters based on the current user's permissions:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Get all posts visible to the current user
+// This automatically includes:
+// - All public and federated posts
+// - Group-private posts where user is a member
+const visiblePosts = await posts.list({
+  categoryId: "general",
+  limit: 20,
+});
+
+// As an admin, get all posts regardless of visibility
+const allPosts = await posts.list({
+  categoryId: "general",
+  includePrivate: true, // Requires admin permission
+  limit: 20,
+});
+```
+
 ### Custom Fields for Categories
 
 Categories can define custom fields that determine what information users provide when creating posts. This allows you to create structured post types tailored to your community's needs.
