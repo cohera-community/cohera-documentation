@@ -95,6 +95,19 @@ export default {
     // Allow users to change sort order in the UI
     allowUserSort: true,
   },
+
+  // Moderation settings
+  moderation: {
+    enableReporting: true,
+    roles: [], // Uses default role-based permissions
+  },
+
+  // Visibility and federation settings
+  visibility: {
+    defaultLevel: "public",
+    allowUserChoice: true,
+    enableFederation: false,
+  },
 };
 ```
 
