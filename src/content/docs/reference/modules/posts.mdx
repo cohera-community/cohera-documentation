@@ -125,7 +125,7 @@ An array of category objects that define how posts can be organized.
 - `name` (string, required) - Display name shown in the UI
 - `description` (string, optional) - Description of what belongs in this category
 - `reactions` (array, optional) - Array of emoji strings for reaction buttons. Omit or use empty array to disable reactions for this category.
-- `fields` (array, optional) - Array of field definitions that posts in this category must/can include
+- `fields` (array, optional) - Array of [field definitions](#custom-fields-for-categories) that posts in this category must/can include
 
 **Example:**
 
@@ -419,6 +419,104 @@ When `allowUserChoice` is true, users see visibility options when creating posts
 
 When `allowUserChoice` is false, all posts use the `defaultLevel` visibility.
 
+### Custom Fields for Categories
+
+Categories can define custom fields that determine what information users provide when creating posts. This allows you to create structured post types tailored to your community's needs.
+
+:::note
+All posts automatically include an `author` field. The custom fields you define are in addition to this.
+:::
+
+#### Field Definition
+
+Each field in the `fields` array is an object with the following properties:
+
+**Field object:**
+
+- `name` (string, required) - Display label for the field in the UI
+- `type` (string, required) - The field type (see Field Types below)
+- `description` (string, optional) - Help text explaining what the field is for
+- `required` (boolean, optional, default: false) - Whether the field must be filled
+- `placeholder` (string, optional) - Placeholder text for input fields
+- `defaultValue` (any, optional) - Default value for the field
+- `options` (array, for select/multiSelect) - Array of strings defining available choices
+- `target` (string, for reference/references) - Module and type to reference (format: `module/type`)
+
+#### Field Types
+
+**Text Fields:**
+
+- `shortText` - Single-line text input (for titles, names, short answers)
+- `longText` - Multi-line plain text input (for descriptions, longer content). Supports @mentions for referencing users.
+- `richText` - Rich text editor with markdown/HTML formatting. Supports @mentions for referencing users.
+
+**Media Fields:**
+
+- `image` - Single image upload
+- `images` - Multiple image uploads
+- `video` - Video file upload
+- `file` - Generic file upload
+
+**Structured Data:**
+
+- `date` - Date picker (date only)
+- `dateTime` - Date and time picker (timestamp)
+- `number` - Numeric input with validation
+- `url` - URL input with link validation
+- `select` - Dropdown with single choice from predefined options
+- `multiSelect` - Multiple choice selection from predefined options
+
+**References:**
+
+- `reference` - Link to a single item from another module (requires `target`)
+- `references` - Link to multiple items from another module (requires `target`)
+
+#### Field Type Examples
+
+**Text fields:**
+
+```js
+{
+  name: 'Title',
+  type: 'shortText',
+  required: true,
+  placeholder: 'Enter a title...',
+}
+```
+
+**Select field:**
+
+```js
+{
+  name: 'Priority',
+  type: 'select',
+  options: ['Low', 'Medium', 'High', 'Urgent'],
+  defaultValue: 'Medium',
+}
+```
+
+**Reference field:**
+
+```js
+{
+  name: 'Related Event',
+  type: 'reference',
+  target: 'calendar/event',
+  description: 'Link to an event from the calendar',
+}
+```
+
+**Multiple references:**
+
+```js
+{
+  name: 'Related Posts',
+  type: 'references',
+  target: 'posts/post',
+  description: 'Link to other related posts',
+}
+```
+
 ## Moderation & Visibility Usage
 
 This section shows practical examples of using moderation and visibility features in your application code.
@@ -559,104 +657,6 @@ const allPosts = await posts.list({
   includePrivate: true, // Requires admin permission
   limit: 20,
 });
-```
-
-### Custom Fields for Categories
-
-Categories can define custom fields that determine what information users provide when creating posts. This allows you to create structured post types tailored to your community's needs.
-
-:::note
-All posts automatically include an `author` field. The custom fields you define are in addition to this.
-:::
-
-#### Field Definition
-
-Each field in the `fields` array is an object with the following properties:
-
-**Field object:**
-
-- `name` (string, required) - Display label for the field in the UI
-- `type` (string, required) - The field type (see Field Types below)
-- `description` (string, optional) - Help text explaining what the field is for
-- `required` (boolean, optional, default: false) - Whether the field must be filled
-- `placeholder` (string, optional) - Placeholder text for input fields
-- `defaultValue` (any, optional) - Default value for the field
-- `options` (array, for select/multiSelect) - Array of strings defining available choices
-- `target` (string, for reference/references) - Module and type to reference (format: `module/type`)
-
-#### Field Types
-
-**Text Fields:**
-
-- `shortText` - Single-line text input (for titles, names, short answers)
-- `longText` - Multi-line plain text input (for descriptions, longer content). Supports @mentions for referencing users.
-- `richText` - Rich text editor with markdown/HTML formatting. Supports @mentions for referencing users.
-
-**Media Fields:**
-
-- `image` - Single image upload
-- `images` - Multiple image uploads
-- `video` - Video file upload
-- `file` - Generic file upload
-
-**Structured Data:**
-
-- `date` - Date picker (date only)
-- `dateTime` - Date and time picker (timestamp)
-- `number` - Numeric input with validation
-- `url` - URL input with link validation
-- `select` - Dropdown with single choice from predefined options
-- `multiSelect` - Multiple choice selection from predefined options
-
-**References:**
-
-- `reference` - Link to a single item from another module (requires `target`)
-- `references` - Link to multiple items from another module (requires `target`)
-
-#### Field Type Examples
-
-**Text fields:**
-
-```js
-{
-  name: 'Title',
-  type: 'shortText',
-  required: true,
-  placeholder: 'Enter a title...',
-}
-```
-
-**Select field:**
-
-```js
-{
-  name: 'Priority',
-  type: 'select',
-  options: ['Low', 'Medium', 'High', 'Urgent'],
-  defaultValue: 'Medium',
-}
-```
-
-**Reference field:**
-
-```js
-{
-  name: 'Related Event',
-  type: 'reference',
-  target: 'calendar/event',
-  description: 'Link to an event from the calendar',
-}
-```
-
-**Multiple references:**
-
-```js
-{
-  name: 'Related Posts',
-  type: 'references',
-  target: 'posts/post',
-  description: 'Link to other related posts',
-}
 ```
 
 ## Examples
