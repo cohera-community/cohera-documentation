@@ -1,0 +1,1092 @@
+---
+title: Posts Module
+description: Content publishing and feeds
+---
+
+import Post from "../../../../components/Post.astro";
+import Comment from "../../../../components/Comment.astro";
+import ReactionPicker from "../../../../components/ReactionPicker.astro";
+import ComponentPreview from "../../../../components/ComponentPreview.astro";
+
+The Posts module enables social media-style content publishing in your community platform. Members can create posts with rich media, comment on posts, and interact with content through customizable feeds. The module includes built-in moderation tools and flexible visibility controls, including optional ActivityPub federation for connecting with the wider fediverse.
+
+Each post category can define custom fields that determine what information users provide when creating posts. This allows you to create specialized post types like event announcements, music sharing, photo galleries, or any other structured content your community needs.
+
+## Quick Start
+
+### Adding the Posts module
+
+If you didn't include the Posts module during initial project setup, you can add it at any time:
+
+```bash
+cohera module add posts
+```
+
+This command will:
+
+1. Install the Posts module package
+2. Update your `config/cohera.config.js` to enable the module
+3. Create a default configuration file at `config/modules/posts.config.js`
+4. Run database migrations to set up posts and comments storage
+
+### Creating your first post
+
+Once the module is installed, posts can be created through your platform's UI. The Posts module provides:
+
+- **Rich text editing** - Format post content with markdown or rich text
+- **Media attachments** - Embed images, videos, and other media
+- **Categories** - Organize posts using custom categories
+- **Comments** - Enable discussions with configurable nesting
+
+### Accessing posts
+
+Posts are automatically accessible at `/posts/{id}` where `{id}` is the auto-generated post identifier. This routing pattern is convention-based and requires no configuration.
+
+Here's what a post looks like:
+
+<ComponentPreview>
+  <Post
+    author="community_member"
+    content="Just joined this amazing community! Thanks @alice for the warm welcome 👋"
+    reactions={["👍", "❤️", "🎉"]}
+    selectedReaction="👍"
+    commentCount={3}
+  />
+</ComponentPreview>
+
+## Configuration
+
+The Posts module is configured via `config/modules/posts.config.js`. Here's an example configuration:
+
+```js
+// config/modules/posts.config.js
+export default {
+  // Define custom categories for organizing posts
+  categories: [
+    {
+      id: "announcements",
+      name: "Announcements",
+      description: "Important platform updates and news",
+    },
+    {
+      id: "general",
+      name: "General Discussion",
+      description: "General community conversations",
+    },
+    {
+      id: "help",
+      name: "Help & Support",
+      description: "Ask questions and get help from the community",
+    },
+  ],
+
+  // Configure comment nesting depth
+  // 0 = no comments, 1 = comments only (no replies), 2+ = nested replies
+  comments: {
+    maxNestingDepth: 1,
+  },
+
+  // Feed display and sorting options
+  feed: {
+    // Default sort order for post feeds
+    // Options: 'newest', 'popular', 'trending'
+    defaultSort: "newest",
+
+    // Allow users to change sort order in the UI
+    allowUserSort: true,
+  },
+
+  // Moderation settings
+  moderation: {
+    enableReporting: true,
+    roles: [], // Uses default role-based permissions
+  },
+
+  // Visibility and federation settings
+  visibility: {
+    defaultLevel: "public",
+    allowUserChoice: true,
+    enableFederation: false,
+  },
+};
+```
+
+### Configuration Reference
+
+#### `categories`
+
+An array of category objects that define how posts can be organized.
+
+**Type:** `Array<Category>`
+
+**Category object:**
+
+- `id` (string, required) - Unique identifier for the category. This ID is used as the database table name for posts in this category.
+- `name` (string, required) - Display name shown in the UI
+- `description` (string, optional) - Description of what belongs in this category
+- `reactions` (array, optional) - Array of emoji strings for reaction buttons. Omit or use empty array to disable reactions for this category.
+- `fields` (array, optional) - Array of [field definitions](#custom-fields-for-categories) that posts in this category must/can include
+
+**Example:**
+
+```js
+categories: [
+  {
+    id: "announcements",
+    name: "Announcements",
+    description: "Important platform updates",
+    fields: [
+      {
+        name: "Title",
+        type: "shortText",
+        required: true,
+      },
+      {
+        name: "Content",
+        type: "richText",
+        required: true,
+      },
+    ],
+  },
+];
+```
+
+#### `comments.maxNestingDepth`
+
+Controls how deeply comments can be nested in reply threads.
+
+**Type:** `number | null`
+
+**Values:**
+
+- `0` - Comments disabled
+- `1` - Comments enabled, no replies (flat structure)
+- `2+` - Nested replies up to specified depth
+- `null` - Unlimited nesting depth (no limit)
+
+**Default:** `1`
+
+**Example:**
+
+```js
+comments: {
+  maxNestingDepth: 2, // Allow comments with one level of replies
+}
+```
+
+**Visual examples of nesting depths:**
+
+With `maxNestingDepth: 1` (flat comments only):
+
+<ComponentPreview>
+  <Comment
+    author="alice"
+    content="Great post!"
+    depth={0}
+    timestamp="2 hours ago"
+  />
+  <Comment author="bob" content="I agree!" depth={0} timestamp="1 hour ago" />
+</ComponentPreview>
+
+With `maxNestingDepth: 2` (one level of replies):
+
+<ComponentPreview>
+  <Comment
+    author="alice"
+    content="Great post!"
+    depth={0}
+    reactions={["👍", "❤️"]}
+    timestamp="3 hours ago"
+  />
+  <Comment
+    author="bob"
+    content="@alice thanks for sharing!"
+    depth={1}
+    timestamp="2 hours ago"
+  />
+  <Comment
+    author="charlie"
+    content="Also loved it!"
+    depth={0}
+    timestamp="1 hour ago"
+  />
+</ComponentPreview>
+
+With `maxNestingDepth: 3` (deeper nesting):
+
+<ComponentPreview>
+  <Comment
+    author="alice"
+    content="Has anyone tried the new feature?"
+    depth={0}
+    timestamp="4 hours ago"
+  />
+  <Comment
+    author="bob"
+    content="@alice yes! It's working great for me"
+    depth={1}
+    timestamp="3 hours ago"
+  />
+  <Comment
+    author="alice"
+    content="@bob what setup are you using?"
+    depth={2}
+    timestamp="2 hours ago"
+  />
+  <Comment
+    author="bob"
+    content="@alice I'm on the latest version with default config"
+    depth={3}
+    reactions={["✅"]}
+    timestamp="1 hour ago"
+  />
+</ComponentPreview>
+
+#### `feed.defaultSort`
+
+The default sort order for post feeds.
+
+**Type:** `'newest' | 'popular' | 'trending'`
+
+**Default:** `'newest'`
+
+**Options:**
+
+- `'newest'` - Most recent posts first
+- `'popular'` - Posts with most engagement (likes, comments)
+- `'trending'` - Posts gaining engagement quickly
+
+**Example:**
+
+```js
+feed: {
+  defaultSort: 'popular',
+}
+```
+
+#### `feed.allowUserSort`
+
+Whether users can change the feed sort order in the UI.
+
+**Type:** `boolean`
+
+**Default:** `true`
+
+**Example:**
+
+```js
+feed: {
+  allowUserSort: false, // Lock feed to defaultSort
+}
+```
+
+#### `moderation`
+
+Configure moderation features and permissions for managing post content.
+
+**Type:** `object`
+
+**Properties:**
+
+- `enableReporting` (boolean, default: true) - Allow users to report posts for moderator review
+- `roles` (array, optional) - Define custom roles with moderation permissions
+
+**Default:**
+
+```js
+moderation: {
+  enableReporting: true,
+  roles: [], // Uses default role-based permissions
+}
+```
+
+**Example with custom moderation roles:**
+
+```js
+moderation: {
+  enableReporting: true,
+  roles: [
+    {
+      name: "moderator",
+      permissions: ["remove", "hide", "review_reports"],
+    },
+    {
+      name: "admin",
+      permissions: ["remove", "hide", "review_reports", "manage_categories"],
+    },
+  ],
+}
+```
+
+**Available permissions:**
+
+- `remove` - Permanently delete posts
+- `hide` - Hide posts from public view (soft delete)
+- `review_reports` - Access and act on user-reported content
+- `manage_categories` - Modify category configurations
+
+**Content Reporting:**
+
+When `enableReporting` is true, users can report posts that violate community guidelines. Reported posts appear in the moderation queue for users with the `review_reports` permission. Moderators can then choose to:
+
+- Dismiss the report (no action)
+- Hide the post (temporarily remove from view)
+- Remove the post (permanently delete)
+
+**Role-based Permissions:**
+
+The Posts module integrates with Cohera's role system. By default, these permissions are checked:
+
+- Post authors can always edit or delete their own posts
+- Users with the `moderator` role can hide and review reports
+- Users with the `admin` role have full moderation capabilities
+
+You can customize these permissions using the `roles` configuration option.
+
+#### `visibility`
+
+Configure post visibility levels to control who can see posts across your instance and federated network.
+
+**Type:** `object`
+
+**Properties:**
+
+- `defaultLevel` (string, default: 'public') - Default visibility level for new posts
+- `allowUserChoice` (boolean, default: true) - Allow users to choose visibility when creating posts
+- `enableFederation` (boolean, default: false) - Enable ActivityPub federation for public posts
+
+**Default:**
+
+```js
+visibility: {
+  defaultLevel: 'public',
+  allowUserChoice: true,
+  enableFederation: false,
+}
+```
+
+**Visibility Levels:**
+
+The Posts module supports three visibility levels that control post access:
+
+1. **Public & Federated** - Post is visible to everyone and shared across federated instances via ActivityPub
+   - Visible to all users on your instance
+   - Shared with other instances in the federation network
+   - Appears in public feeds across the fediverse
+   - Requires `enableFederation: true` in configuration
+
+2. **Public (Instance-only)** - Post is visible to everyone on your instance only
+   - Visible to all users on your instance (logged in or not)
+   - Not shared with federated instances
+   - Appears in your instance's public feeds
+   - Default when `enableFederation: false`
+
+3. **Group Private** - Post is visible only to members of specific groups
+   - Only visible to users in designated groups
+   - Not visible in public feeds
+   - Not federated
+   - Requires groups module integration
+
+**Example configuration:**
+
+```js
+visibility: {
+  defaultLevel: 'public', // Start posts as public to instance
+  allowUserChoice: true,  // Let users choose visibility
+  enableFederation: true, // Enable cross-instance federation
+}
+```
+
+**Federation:**
+
+When `enableFederation` is enabled, posts marked as "Public & Federated" are shared using the ActivityPub protocol. This means:
+
+- Posts appear on other Cohera instances and compatible platforms (Mastodon, Pleroma, etc.)
+- Users from other instances can interact with your posts (reactions, comments)
+- Your instance must have ActivityPub configured in the main Cohera settings
+
+**Group Private Posts:**
+
+Group private posts require the Groups module. When creating a post, users can select specific groups that should have access. Only members of those groups will see the post in their feeds or be able to access it directly.
+
+**User Choice:**
+
+When `allowUserChoice` is true, users see visibility options when creating posts:
+
+- "Public & Federated" (if federation is enabled)
+- "Public (Instance-only)" (always available)
+- "Private to groups..." (if groups module is installed)
+
+When `allowUserChoice` is false, all posts use the `defaultLevel` visibility.
+
+### Custom Fields for Categories
+
+Categories can define custom fields that determine what information users provide when creating posts. This allows you to create structured post types tailored to your community's needs.
+
+:::note
+All posts automatically include an `author` field. The custom fields you define are in addition to this.
+:::
+
+#### Field Definition
+
+Each field in the `fields` array is an object with the following properties:
+
+**Field object:**
+
+- `name` (string, required) - Display label for the field in the UI
+- `type` (string, required) - The field type (see Field Types below)
+- `description` (string, optional) - Help text explaining what the field is for
+- `required` (boolean, optional, default: false) - Whether the field must be filled
+- `placeholder` (string, optional) - Placeholder text for input fields
+- `defaultValue` (any, optional) - Default value for the field
+- `options` (array, for select/multiSelect) - Array of strings defining available choices
+- `target` (string, for reference/references) - Module and type to reference (format: `module/type`)
+
+#### Field Types
+
+**Text Fields:**
+
+- `shortText` - Single-line text input (for titles, names, short answers)
+- `longText` - Multi-line plain text input (for descriptions, longer content). Supports @mentions for referencing users.
+- `richText` - Rich text editor with markdown/HTML formatting. Supports @mentions for referencing users.
+
+**Media Fields:**
+
+- `image` - Single image upload
+- `images` - Multiple image uploads
+- `video` - Video file upload
+- `file` - Generic file upload
+
+**Structured Data:**
+
+- `date` - Date picker (date only)
+- `dateTime` - Date and time picker (timestamp)
+- `number` - Numeric input with validation
+- `url` - URL input with link validation
+- `select` - Dropdown with single choice from predefined options
+- `multiSelect` - Multiple choice selection from predefined options
+
+**References:**
+
+- `reference` - Link to a single item from another module (requires `target`)
+- `references` - Link to multiple items from another module (requires `target`)
+
+#### Field Type Examples
+
+**Text fields:**
+
+```js
+{
+  name: 'Title',
+  type: 'shortText',
+  required: true,
+  placeholder: 'Enter a title...',
+}
+```
+
+**Select field:**
+
+```js
+{
+  name: 'Priority',
+  type: 'select',
+  options: ['Low', 'Medium', 'High', 'Urgent'],
+  defaultValue: 'Medium',
+}
+```
+
+**Reference field:**
+
+```js
+{
+  name: 'Related Event',
+  type: 'reference',
+  target: 'calendar/event',
+  description: 'Link to an event from the calendar',
+}
+```
+
+**Multiple references:**
+
+```js
+{
+  name: 'Related Posts',
+  type: 'references',
+  target: 'posts/post',
+  description: 'Link to other related posts',
+}
+```
+
+## Moderation & Visibility Usage
+
+This section shows practical examples of using moderation and visibility features in your application code.
+
+### Creating Posts with Specific Visibility
+
+When creating a post programmatically, you can set the visibility level:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Create a public post (instance-only)
+const publicPost = await posts.create({
+  categoryId: "general",
+  title: "Welcome to our community!",
+  content: "Excited to be here and meet everyone.",
+  visibility: "public",
+});
+
+// Create a federated post (shared across instances)
+const federatedPost = await posts.create({
+  categoryId: "announcements",
+  title: "Big news!",
+  content: "Our community is now part of the fediverse!",
+  visibility: "federated",
+});
+
+// Create a group-private post
+const privatePost = await posts.create({
+  categoryId: "general",
+  title: "Team discussion",
+  content: "Let's plan our next meetup.",
+  visibility: "private",
+  groups: ["team-leads", "organizers"],
+});
+```
+
+### Reporting Posts
+
+Users can report posts that violate community guidelines:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Report a post
+await posts.report({
+  postId: "post-123",
+  reason: "spam",
+  details: "This post is advertising unrelated products",
+});
+```
+
+### Moderator Actions
+
+Users with moderation permissions can perform these actions:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Get the moderation queue (requires 'review_reports' permission)
+const reports = await posts.moderation.getReports({
+  status: "pending",
+  limit: 20,
+});
+
+// Review a specific report
+const report = await posts.moderation.getReport("report-456");
+
+// Dismiss a report (no action needed)
+await posts.moderation.dismissReport("report-456", {
+  reason: "Not a violation",
+});
+
+// Hide a post (soft delete - requires 'hide' permission)
+await posts.moderation.hide("post-123", {
+  reason: "Inappropriate content",
+  reportId: "report-456", // Optional: link to report
+});
+
+// Remove a post permanently (requires 'remove' permission)
+await posts.moderation.remove("post-123", {
+  reason: "Spam",
+  reportId: "report-456",
+});
+
+// Restore a hidden post
+await posts.moderation.restore("post-123");
+```
+
+### Checking User Permissions
+
+Before showing moderation UI elements, check if the user has permissions:
+
+```typescript
+import { posts } from "@cohera/posts";
+import { auth } from "@cohera/auth";
+
+const currentUser = await auth.getCurrentUser();
+
+// Check if user can moderate posts
+const canModerate = await posts.moderation.canModerate(currentUser.id);
+
+// Check specific permissions
+const permissions = await posts.moderation.getPermissions(currentUser.id);
+
+if (permissions.includes("review_reports")) {
+  // Show moderation queue link
+}
+
+if (permissions.includes("hide")) {
+  // Show hide post button
+}
+
+if (permissions.includes("remove")) {
+  // Show remove post button
+}
+```
+
+### Filtering Posts by Visibility
+
+When querying posts, the API automatically filters based on the current user's permissions:
+
+```typescript
+import { posts } from "@cohera/posts";
+
+// Get all posts visible to the current user
+// This automatically includes:
+// - All public and federated posts
+// - Group-private posts where user is a member
+const visiblePosts = await posts.list({
+  categoryId: "general",
+  limit: 20,
+});
+
+// As an admin, get all posts regardless of visibility
+const allPosts = await posts.list({
+  categoryId: "general",
+  includePrivate: true, // Requires admin permission
+  limit: 20,
+});
+```
+
+## Examples
+
+### Music sharing
+
+A community where members share what they're listening to:
+
+```js
+// config/modules/posts.config.js
+export default {
+  categories: [
+    {
+      id: "music",
+      name: "Currently Listening",
+      description: "Share what you're listening to right now",
+      reactions: ["🔥", "🎵", "💯", "❤️"],
+      fields: [
+        {
+          name: "Track Title",
+          type: "shortText",
+          required: true,
+          placeholder: "Song name and artist",
+        },
+        {
+          name: "Link",
+          type: "url",
+          placeholder: "Spotify, Apple Music, YouTube, etc.",
+        },
+        {
+          name: "Thoughts",
+          type: "longText",
+          placeholder: "What do you think about this track?",
+        },
+        {
+          name: "Genre",
+          type: "select",
+          options: [
+            "Rock",
+            "Pop",
+            "Hip Hop",
+            "Electronic",
+            "Jazz",
+            "Classical",
+            "Other",
+          ],
+        },
+      ],
+    },
+  ],
+  comments: {
+    maxNestingDepth: 1,
+  },
+  feed: {
+    defaultSort: "newest",
+    allowUserSort: true,
+  },
+};
+```
+
+<ComponentPreview>
+  <Post
+    author="musiclover42"
+    content="Currently listening to this amazing track! @alice you'll love this 🎧"
+    reactions={["🔥", "🎵", "💯", "❤️"]}
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  />
+</ComponentPreview>
+
+**Community discussion:**
+
+<ComponentPreview>
+  <Comment
+    author="alice"
+    content="@musiclover42 This is incredible! Adding it to my playlist right now 🎶"
+    depth={0}
+    reactions={["❤️", "🎵"]}
+    timestamp="30 minutes ago"
+  />
+  <Comment
+    author="jazz_enthusiast"
+    content="Great choice! The whole album is worth checking out"
+    depth={0}
+    timestamp="15 minutes ago"
+  />
+</ComponentPreview>
+
+### Event announcements with calendar integration
+
+Configuration that links posts to events from the calendar module:
+
+```js
+// config/modules/posts.config.js
+export default {
+  categories: [
+    {
+      id: "event-announcements",
+      name: "Event Announcements",
+      description: "Announce and discuss upcoming community events",
+      reactions: ["🎉", "👀", "❤️", "🔥"],
+      fields: [
+        {
+          name: "Announcement",
+          type: "richText",
+          required: true,
+          placeholder: "Tell the community about this event...",
+        },
+        {
+          name: "Related Event",
+          type: "reference",
+          target: "calendar/event",
+          required: true,
+          description: "Link to the event in the calendar",
+        },
+        {
+          name: "Cover Image",
+          type: "image",
+        },
+        {
+          name: "RSVP Required",
+          type: "select",
+          options: ["Yes", "No", "Optional"],
+          defaultValue: "Optional",
+        },
+      ],
+    },
+    {
+      id: "general",
+      name: "General Discussion",
+      description: "Everything else",
+      fields: [
+        {
+          name: "Content",
+          type: "richText",
+          required: true,
+        },
+      ],
+    },
+  ],
+  comments: {
+    maxNestingDepth: 2,
+  },
+  feed: {
+    defaultSort: "newest",
+    allowUserSort: true,
+  },
+};
+```
+
+<ComponentPreview>
+  <Post
+    author="event_organizer"
+    content="Excited to announce our summer meetup! 🌞 Save the date and check out the details. Can't wait to see you there!"
+    reactions={["🎉", "👀", "❤️", "🔥"]}
+    event={{
+      title: "Summer Community Meetup 2024",
+      date: "July 15, 2024",
+      time: "2:00 PM",
+      location: "Central Park Pavilion",
+      description:
+        "Join us for an afternoon of networking, food, and fun activities!",
+      rsvpRequired: "Yes",
+    }}
+  />
+</ComponentPreview>
+
+**Community discussion:**
+
+<ComponentPreview>
+  <Comment
+    author="bob"
+    content="I'll definitely be there! Is there parking available nearby?"
+    depth={0}
+    timestamp="2 hours ago"
+  />
+  <Comment
+    author="event_organizer"
+    content="Yes! There's a parking lot right next to the pavilion"
+    depth={1}
+    reactions={["👍"]}
+    timestamp="1 hour ago"
+  />
+  <Comment
+    author="sarah_m"
+    content="Can I bring a guest?"
+    depth={2}
+    timestamp="45 minutes ago"
+  />
+  <Comment
+    author="community_member"
+    content="This sounds amazing! Count me in 🎉"
+    depth={0}
+    reactions={["🎉", "❤️"]}
+    timestamp="30 minutes ago"
+  />
+</ComponentPreview>
+
+### Photo sharing platform
+
+Configuration for a community focused on photo sharing:
+
+```js
+// config/modules/posts.config.js
+export default {
+  categories: [
+    {
+      id: "photos",
+      name: "Photo Posts",
+      description: "Share your photography with the community",
+      reactions: ["❤️", "📸", "✨", "🔥"],
+      fields: [
+        {
+          name: "Title",
+          type: "shortText",
+          required: true,
+          placeholder: "Give your photo a title",
+        },
+        {
+          name: "Photos",
+          type: "images",
+          required: true,
+        },
+        {
+          name: "Caption",
+          type: "longText",
+          placeholder: "Tell us about these photos...",
+        },
+        {
+          name: "Category",
+          type: "select",
+          options: [
+            "Nature",
+            "Architecture",
+            "People",
+            "Street",
+            "Events",
+            "Other",
+          ],
+          required: true,
+        },
+        {
+          name: "Camera/Phone",
+          type: "shortText",
+          placeholder: "What did you shoot with?",
+        },
+        {
+          name: "Location",
+          type: "shortText",
+          placeholder: "Where was this taken?",
+        },
+      ],
+    },
+  ],
+  comments: {
+    maxNestingDepth: 1, // Flat comments like social media
+  },
+  feed: {
+    defaultSort: "popular",
+    allowUserSort: true,
+  },
+};
+```
+
+<ComponentPreview>
+  <Post
+    author="photographer_pro"
+    content="Golden hour at the beach 🌅 One of my favorite shots from this weekend. The colors are incredible!"
+    reactions={["❤️", "📸", "✨", "🔥"]}
+    image="https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875"
+  />
+</ComponentPreview>
+
+### Multi-purpose community forum
+
+A versatile setup with different post types for different needs:
+
+```js
+// config/modules/posts.config.js
+export default {
+  categories: [
+    {
+      id: "announcements",
+      name: "Announcements",
+      description: "Official announcements from the team",
+      reactions: ["📢", "👍", "❤️", "🎉"],
+      fields: [
+        {
+          name: "Title",
+          type: "shortText",
+          required: true,
+        },
+        {
+          name: "Content",
+          type: "richText",
+          required: true,
+        },
+        {
+          name: "Priority",
+          type: "select",
+          options: ["Low", "Medium", "High", "Urgent"],
+          defaultValue: "Medium",
+        },
+      ],
+    },
+    {
+      id: "discussions",
+      name: "General Discussion",
+      description: "Community conversations",
+      reactions: ["👍", "💡", "❤️", "🤔"],
+      fields: [
+        {
+          name: "Topic",
+          type: "shortText",
+          required: true,
+        },
+        {
+          name: "Content",
+          type: "richText",
+          required: true,
+        },
+        {
+          name: "Tags",
+          type: "multiSelect",
+          options: ["Question", "Discussion", "Feedback", "Idea", "Other"],
+        },
+      ],
+    },
+    {
+      id: "showcase",
+      name: "Showcase",
+      description: "Share your projects and creations",
+      reactions: ["🚀", "🔥", "👏", "💯"],
+      fields: [
+        {
+          name: "Project Name",
+          type: "shortText",
+          required: true,
+        },
+        {
+          name: "Description",
+          type: "richText",
+          required: true,
+        },
+        {
+          name: "Screenshots",
+          type: "images",
+        },
+        {
+          name: "Project URL",
+          type: "url",
+          placeholder: "Link to your project",
+        },
+        {
+          name: "Tech Stack",
+          type: "multiSelect",
+          options: [
+            "JavaScript",
+            "TypeScript",
+            "Python",
+            "Go",
+            "Rust",
+            "Other",
+          ],
+        },
+      ],
+    },
+  ],
+  comments: {
+    maxNestingDepth: 3, // Allow deeper discussions
+  },
+  feed: {
+    defaultSort: "trending",
+    allowUserSort: true,
+  },
+};
+```
+
+<ComponentPreview>
+
+<Post
+  author="admin"
+  content="Important: We're rolling out new community features next week! Stay tuned for updates."
+  reactions={["📢", "👍", "❤️", "🎉"]}
+  commentCount={12}
+/>
+<Post
+  author="developer_jane"
+  content="Just shipped my first open source project! 🎉 Built with TypeScript and Svelte. Would love to hear your feedback!"
+  reactions={["🚀", "🔥", "👏", "💯"]}
+  commentCount={8}
+  url="<https://github.com/cohera-community/cohera-documentation>"
+/>
+
+<Comment
+  author="tech_enthusiast"
+  content="This looks fantastic! How did you handle state management?"
+  depth={0}
+  reactions={["👍", "🤔"]}
+  timestamp="3 hours ago"
+/>
+<Comment
+  author="developer_jane"
+  content="Thanks! I used Svelte contexts for global state and local state for components"
+  depth={1}
+  timestamp="2 hours ago"
+/>
+<Comment
+  author="tech_enthusiast"
+  content="Interesting choice! Did you consider using Zustand or Redux?"
+  depth={2}
+  timestamp="2 hours ago"
+/>
+<Comment
+  author="developer_jane"
+  content="I wanted to keep dependencies minimal for v1. Might revisit for v2!"
+  depth={3}
+  reactions={["💯", "✅"]}
+  timestamp="1 hour ago"
+/>
+<Comment
+  author="senior_dev"
+  content="Great work! The code looks clean and well-documented 🎯"
+  depth={0}
+  reactions={["🚀", "❤️"]}
+  timestamp="1 hour ago"
+/>
+<Comment
+  author="curious_coder"
+  content="What testing framework did you use?"
+  depth={1}
+  timestamp="30 minutes ago"
+/>
+</ComponentPreview>

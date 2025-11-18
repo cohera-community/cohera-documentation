@@ -1,0 +1,50 @@
+---
+title: Core Concepts
+description: Essential concepts for understanding how Cohera modules work together
+---
+
+This page explains the core concepts you'll encounter when building with Cohera. Each concept builds on the previous ones to show how modules compose into custom community platforms.
+
+## Modules
+
+A module is a self-contained building block that bundles frontend, backend, and data layers for a specific feature (like posts, events, or profiles). Modules are distributed as npm packages and can be used independently or combined together. Each module exposes its functionality through a consistent [package structure](#package-structure).
+
+## Package Structure
+
+Every Cohera module exports four distinct paths: `/api` for [tRPC routers](#routers), `/ui` for [Svelte components](#svelte-components), `/db` for [Drizzle schemas](#drizzle-schema), and `/types` for shared TypeScript types. This structure lets you use only the parts you need—take the complete module, or use just the UI components with your own backend. The separation ensures modules remain loosely coupled while providing full-featured defaults.
+
+## Svelte Components
+
+Cohera's UI layer consists of presentation-focused Svelte components that accept data as props rather than fetching it themselves. Components use shared types from the module's `/types` export to ensure type safety, and style themselves using CSS variables for easy theming. This design lets you use Cohera components with any backend that matches the type contract, not just Cohera's [routers](#routers).
+
+## SvelteKit Routing
+
+SvelteKit's file-based routing (where `routes/posts/+page.svelte` becomes `/posts`) determines how [Svelte components](#svelte-components) are organized into pages. Cohera components integrate into your route files, where you fetch data using [tRPC](#routers) and pass it to components as props. The routing layer is entirely yours to control—Cohera provides the components but doesn't dictate your URL structure.
+
+## Routers
+
+A router is a tRPC object that groups related API procedures (queries and mutations) for a module. Each module provides a router via its `/api` export that you compose into your application's main router. Routers access the database through [context](#context-procedures) and return type-safe data that automatically flows to your frontend.
+
+## Context & Procedures
+
+Context is the runtime environment available to every tRPC procedure, typically containing your database instance and optional services like federation. Procedures are the individual API endpoints (queries for reads, mutations for writes) that make up a [router](#routers). This separation between configuration (context) and logic (procedures) embodies the "Imperative Shell, Functional Core" principle—side effects stay in the context while business logic remains testable and pure.
+
+## Drizzle Schema
+
+A Drizzle schema is a TypeScript definition of a database table that provides both runtime validation and compile-time types. Each module exports its schemas via the `/db` path, which you combine into a single Postgres database. Schemas are the foundation of Cohera's [type safety](#type-safety-flow)—types inferred from schemas flow through routers to the frontend automatically.
+
+## Type Safety Flow
+
+Type safety in Cohera flows from database → backend → frontend without manual type definitions. [Drizzle schemas](#drizzle-schema) generate TypeScript types, [routers](#routers) expose those types through tRPC's inference, and frontend code gets autocomplete and type checking when calling API procedures. This automatic flow means changing a database column instantly surfaces type errors everywhere the data is used, preventing runtime bugs.
+
+:::caution[No DB usage]
+How can we export types when users use module/db but their own backend?
+:::
+
+## Ejection
+
+Cohera modules live in `node_modules` as npm packages, meaning you don't directly edit their source code—updates come via `npm install`. Ejection copies a module's source code from `node_modules` into your project's `src/` directory, giving you full control to modify it. After ejecting, you own the code and npm updates no longer apply—you're responsible for maintaining it. Eject when configuration and composition aren't enough, but understand you're trading easy updates for customization freedom.
+
+## Federation
+
+Federation is optional ActivityPub integration that lets your platform share content with other servers. Modules with federation support include fields like `activityPubId` in their [schemas](#drizzle-schema) and accept an optional `federation` service in [context](#context-procedures). When enabled, actions like creating a post also announce the activity to remote servers, but federation is never required—modules work perfectly well in standalone mode.

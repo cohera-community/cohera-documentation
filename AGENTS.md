@@ -5,6 +5,16 @@ We're using the [Diátaxis model](https://diataxis.fr/) for documentation struct
 
 IMPORTANT: Cohera does not exist yet. We're writing the documentation as if it exists though.
 
+## Cohera
+
+Cohera is a collection of modules for quickly building custom community platforms.
+Read src/content/docs/reference/architecture.mdx for an overview.
+
+### CLI
+
+src/content/docs/reference/cli.mdx provides an overview of all `cohera` subcommands.
+STOP if you need to use one that does not exist there!
+
 ## Diátaxis
 
 - four kinds are: tutorials, how-to guides, reference and explanation
