@@ -6,3 +6,92 @@ description: Member profiles and user management
 :::note
 This documentation needs to be created. Track progress at [COH-12](https://linear.app/cohera/issue/COH-12/document-all-first-party-modules).
 :::
+
+## Quick Start
+
+### Prerequisites
+The cohera [auth module](/reference/modules/auth/)
+Or alternativly your own usermanagement that provides the user data. See [here](#configuration) how to configure that.
+
+### Adding the User Profiles module
+
+If you didn't include the User Profiles module during initial project setup, you can add it at any time:
+
+```bash
+cohera module add user-profiles
+```
+
+Each userprofile will be accessible under `/profile/{username}`
+:::note
+This would requie usernames to be unique
+:::
+
+
+## UI
+
+### Card
+A card preview of the profile. By default if you click on it it opens the [ProfilePopup](#popup)
+
+Example Usage:
+```svelte
+<ProfileCard userID='<userId>' />
+```
+
+Preview:
+:::note
+TODO: Create a visual example of how the component looks.
+:::
+
+### PopUp
+
+Example Usage:
+```svelte
+<ProfilePopup userID='<userId>' />
+```
+Preview:
+:::note
+TODO: Create a visual example of how the component looks.
+:::
+
+### Page
+Example Usage:
+```svelte
+<ProfilePage userID='<userId>' />
+```
+
+Preview:
+:::note
+TODO: Create a visual example of how the component looks.
+:::
+
+## Configuration
+
+### Connect to custom usermanagement
+
+`coher.config.ts`
+```ts
+export default {
+    userData: {
+        endpoint: <path or full URL>
+    }
+}
+```
+
+the endpoint shoul provide sth like 
+
+:::note
+what about `trpc`
+:::
+
+`/users?count=<int>&offset=<int>`: list of users
+`/user/<username>`
+```json
+{
+    "userId": "mrGreenTea",
+    "firstName": "John",
+    "lastName": "Doe",
+    "picture": "/files/images/mrGreenTea.webp", //path or full URL
+    "bio": "I love donuts!!",
+    "groups": ["admin", "soccer-player"]
+}
+```
