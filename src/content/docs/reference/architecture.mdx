@@ -7,8 +7,9 @@ import { Code, Steps, FileTree } from "@astrojs/starlight/components";
 
 import postSchemaCode from "../../../examples/architecture/database/posts_schema.ts?raw";
 import installModulesCode from "../../../examples/architecture/integration/install-modules.sh?raw";
-import dbCode from "../../../examples/architecture/integration/db.ts?raw";
+import dbCode from "../../../examples/architecture/integration/schema.ts?raw";
 import trpcCode from "../../../examples/architecture/integration/trpc.ts?raw";
+import loadCode from "../../../examples/architecture/integration/load.ts?raw";
 import frontendCode from "../../../examples/architecture/integration/frontend.svelte?raw";
 
 Cohera is designed as a library of loosely coupled [modules](/reference/modules) that developers compose to build community platforms. Each module bundles its frontend, backend, and data layers while maintaining independence between these layers.
@@ -20,24 +21,26 @@ For quick reference definitions of key terms used throughout this document, see 
 ## Design Principles
 
 - **Loosely coupled**: Each module exposes clean APIs for independent use
-- **Fully featured**: Modules provide everything for the most common use case
 - **Independent layers**: Use just the backend, just the UI, or the complete module
+- **Fully featured**: Modules provide everything for the most common use case
 - **Coherently integrated**: Modules integrate with each other
-- **Type safety**: End-to-end type safety via tRPC
-- **Monolithic deployment**: Optimized for simple deployment at community scale
-- **Federation ready**: Optional ActivityPub federation via core layer
+- **Type safety**: End-to-end type safety
+- **Monolithic deployment**: Optimized for simple deployment
 - **Fine-tuned DX**: We take care to make the experience delightful for developers
 - **Automation, not magic**: Everything is transparently set up and easy to reason about
 - **Imperative Shell, Functional Core**: Every module cleanly separates logic from side-effects
+- **Federation ready**: Optional ActivityPub federation via core layer
 
 ## Technology Stack
 
-- **Frontend**: SvelteKit
-- **Backend**: tRPC
+We built on these awesome technologies:
+
+- **Frontend**: SvelteKit & `shadcn-svelte`
+- **Backend**: tRPC (or [experimental remote functions](https://svelte.dev/docs/kit/remote-functions)?)
 - **Database**: PostgreSQL via Drizzle ORM
-- **Type Safety**: TypeScript with tRPC inference
-- **Federation**: ActivityPub (optional)
-- **Mobile**: Capacitor
+- **Type Safety**: TypeScript via tRPC & drizzle
+- **Federation**: fedify (optional)
+- **Mobile**: Capacitor (optional)
 
 ## Integration Example
 
@@ -59,10 +62,14 @@ Here's how developers build a platform with Cohera:
 
    <Code
      code={dbCode}
-     ins={[2, 3, "{ posts, events }"]}
+     ins={[1, 2]}
      lang="typescript"
-     title="src/lib/server/db.ts"
+     title="src/lib/server/db/schema.ts"
    />
+
+   :::note
+   We could also create one file per module, e.g. `schema/posts.ts` and `schema/events.ts` instead.
+   :::
 
    <Code
      code={trpcCode}
@@ -73,7 +80,12 @@ Here's how developers build a platform with Cohera:
 
 3. Use in [Frontend](#frontend-layer)
 
-   <Code code={frontendCode} lang="svelte" title="routes/posts/+page.svelte" />
+   :::note
+   Should routes be auto created / included in modules?
+   :::
+
+   <Code code={loadCode} lang="typescript" title="routes/+page.ts" />
+   <Code code={frontendCode} lang="svelte" title="routes/+page.svelte" />
 
 4. Deploy
 
@@ -161,7 +173,6 @@ You can use module routers in several ways:
 
 - Import complete router in your tRPC app
 - Use only specific procedures you need
-- Skip Cohera's backend entirely and use just the UI components
 - Build custom backend implementing the same type contracts
 
 ## Frontend Layer
@@ -174,28 +185,35 @@ The frontend layer provides Svelte components for SvelteKit applications.
 
 ### Component Design
 
+:::note
+Real components of course are more complex, feature-complete and better styled.
+:::
+
 ```svelte
 <script lang="ts">
   import type { Post } from "@cohera/posts/types";
+  import * as Card from "$lib/components/ui/card/index.js";
+  import { Button } from "$lib/components/ui/button/index.js";
 
-  export let post: Post;
-  export let onDelete: ((id: string) => void) | undefined = undefined;
+  interface Props {
+    post: Post;
+    onDelete?: (id: Post["id"]) => void;
+  }
+
+  const { post, onDelete }: Props = $props();
 </script>
 
-<article class="post-card">
-  <h3>{post.title}</h3>
-  <p>{post.content}</p>
+<Card.Root>
+  <Card.Header><Card.Title>{post.title}</Card.Title></Card.Header>
+  <Card.Content>
+    <p>{post.content}</p>
+  </Card.Content>
   {#if onDelete}
-    <button on:click={() => onDelete(post.id)}>Delete</button>
+    <Button variant="destructive" onclick={() => onDelete(post.id)}>
+      Delete
+    </Button>
   {/if}
-</article>
-
-<style>
-  .post-card {
-    border: 1px solid var(--cohera-border-color, #ccc);
-    padding: var(--cohera-spacing, 1rem);
-  }
-</style>
+</Card.Root>
 ```
 
 ### Key Characteristics
@@ -203,27 +221,16 @@ The frontend layer provides Svelte components for SvelteKit applications.
 - Components are presentation-focused (data passed as props)
 - Don't directly call tRPC - parent handles data fetching
 - Type-safe props using shared types from `/types` export
-- CSS variables enable theming and customization
+- Tailwind allows [theming](guides/theming)
 - Work with any backend matching the type contract
-
-### Using in SvelteKit
-
-```svelte
-<script lang="ts">
-  import { PostCard } from "@cohera/posts/ui";
-  import { trpc } from "$lib/trpc";
-
-  const posts = trpc.posts.list.query({ limit: 10 });
-</script>
-
-{#each $posts.data ?? [] as post}
-  <PostCard {post} />
-{/each}
-```
 
 ## Database Layer
 
 The database layer provides Drizzle schemas for PostgreSQL.
+
+:::note
+Alternatives to consider might be [prisma](https://www.prisma.io/), [kysley](https://kysely.dev/) or other ORMs.
+:::
 
 ### Schema Example
 
@@ -241,41 +248,13 @@ The database layer provides Drizzle schemas for PostgreSQL.
 - Migrations bundled with modules
 - Single Postgres instance contains all module tables
 
-### Database Setup
-
-```typescript
-import { drizzle } from "drizzle-orm/postgres-js";
-import { posts } from "@cohera/posts/db";
-import { events } from "@cohera/events/db";
-import { profiles } from "@cohera/profiles/db";
-
-export const db = drizzle(postgres(DATABASE_URL), {
-  schema: { posts, events, profiles },
-});
-```
-
 ## Federation Layer
 
 The `@cohera/federation` package provides ActivityPub integration.
 
 ### Federation Service
 
-```typescript
-export class FederationService {
-  constructor(private config: FederationConfig) {}
-
-  async announce(activity: Activity): Promise<void> {
-    if (!this.config.enabled) return;
-
-    const apActivity = this.toActivityPub(activity);
-    await this.deliverToInboxes(apActivity);
-  }
-
-  async handleInbox(activity: ActivityPubActivity): Promise<void> {
-    // Validate and route to module handlers
-  }
-}
-```
+uses [fedify](https://fedify.dev/)
 
 ### Key Characteristics
 
