@@ -3,6 +3,10 @@ title: User Profiles Module
 description: Member profiles and user management
 ---
 
+import ProfileCard from "../../../../components/ProfileCard.astro";
+import ProfilePopup from "../../../../components/ProfilePopup.astro";
+import ProfilePage from "../../../../components/ProfilePage.astro";
+
 :::note
 This documentation needs to be created. Track progress at [COH-12](https://linear.app/cohera/issue/COH-12/document-all-first-party-modules).
 :::
@@ -10,6 +14,7 @@ This documentation needs to be created. Track progress at [COH-12](https://linea
 ## Quick Start
 
 ### Prerequisites
+
 The cohera [auth module](/reference/modules/auth/)
 Or alternativly your own usermanagement that provides the user data. See [here](#configuration) how to configure that.
 
@@ -26,49 +31,52 @@ Each userprofile will be accessible under `/profile/{username}`
 This would requie usernames to be unique
 :::
 
-
 ## UI
 
 ### Card
+
 A card preview of the profile. By default if you click on it it opens the [ProfilePopup](#popup)
 
 Example Usage:
+
 ```svelte
-<ProfileCard userID='<userId>' />
+<ProfileCard userID="<userId>" />
 ```
 
 Preview:
-:::note
-TODO: Create a visual example of how the component looks.
-:::
+
+<ProfileCard userID="mrGreenTea" />
 
 ### PopUp
 
 Example Usage:
+
 ```svelte
-<ProfilePopup userID='<userId>' />
+<ProfilePopup userID="<userId>" />
 ```
+
 Preview:
-:::note
-TODO: Create a visual example of how the component looks.
-:::
+
+<ProfilePopup userID="mrGreenTea" />
 
 ### Page
+
 Example Usage:
+
 ```svelte
-<ProfilePage userID='<userId>' />
+<ProfilePage userID="<userId>" />
 ```
 
 Preview:
-:::note
-TODO: Create a visual example of how the component looks.
-:::
+
+<ProfilePage userID="ada" />
 
 ## Configuration
 
 ### Connect to custom usermanagement
 
 `coher.config.ts`
+
 ```ts
 export default {
     userData: {
@@ -77,21 +85,22 @@ export default {
 }
 ```
 
-the endpoint shoul provide sth like 
+the endpoint shoul provide sth like
+
+`/users?count=<int>&offset=<int>`: list of users
+`/user/<username>`
+
+```json
+{
+  "userId": "mrGreenTea",
+  "firstName": "John",
+  "lastName": "Doe",
+  "picture": "/files/images/mrGreenTea.webp", //path or full URL
+  "bio": "I love donuts!!",
+  "groups": ["admin", "soccer-player"]
+}
+```
 
 :::note
 what about `trpc`
 :::
-
-`/users?count=<int>&offset=<int>`: list of users
-`/user/<username>`
-```json
-{
-    "userId": "mrGreenTea",
-    "firstName": "John",
-    "lastName": "Doe",
-    "picture": "/files/images/mrGreenTea.webp", //path or full URL
-    "bio": "I love donuts!!",
-    "groups": ["admin", "soccer-player"]
-}
-```
