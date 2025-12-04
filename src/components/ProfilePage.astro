@@ -1,0 +1,154 @@
+---
+import type { ImageMetadata } from "astro";
+
+interface Props {
+  userID: string;
+}
+const { userID } = Astro.props as Props;
+
+const users: Record<
+  string,
+  {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    picture: ImageMetadata;
+    bio: string;
+    groups: string[];
+    location?: string;
+    website?: string;
+  }
+> = {
+  mrGreenTea: {
+    userId: "mrGreenTea",
+    firstName: "John",
+    lastName: "Doe",
+    picture: (await import("../assets/profile-picture.jpg")).default,
+    bio: "I love donuts!!",
+    groups: ["admin", "soccer-player"],
+    location: "Berlin, DE",
+    website: "https://example.com/john",
+  },
+  ada: {
+    userId: "ada",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    picture: (await import("../assets/profile-picture2.jpg")).default,
+    bio: "Mathematician and early programmer.",
+    groups: ["historian", "writer"],
+    location: "London, UK",
+    website: "https://example.com/ada",
+  },
+};
+
+const user = users[userID] ?? users.mrGreenTea;
+---
+
+<section class="profile not-content">
+  <header class="hero">
+    <img class="avatar" src={user.picture.src} alt="" width="96" height="96" />
+    <div>
+      <h2 class="name">{user.firstName} {user.lastName}</h2>
+      <p class="sub">{user.location}</p>
+      <div class="tags">
+        {
+          user.groups.map((g) => (
+            <span class="tag" data-tag={g}>
+              {g}
+            </span>
+          ))
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <article class="panel">
+      <h3>About</h3>
+      <p>{user.bio}</p>
+      {
+        user.website && (
+          <p>
+            <a href={user.website} target="_blank" rel="noopener">
+              {user.website}
+            </a>
+          </p>
+        )
+      }
+    </article>
+    <article class="panel">
+      <h3>Activity</h3>
+      <ul class="list">
+        <li>Posted “My donut journey”</li>
+        <li>Joined group “Weekend Footballers”</li>
+        <li>Uploaded a new profile picture</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<style>
+  .profile {
+    border: 1px solid var(--sl-color-gray-5, #e5e7eb);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .hero {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(
+      90deg,
+      var(--sl-color-gray-6, #f3f4f6),
+      var(--sl-color-bg, #ffffff)
+    );
+    border-bottom: 1px solid var(--sl-color-gray-5, #e5e7eb);
+  }
+  .hero .avatar {
+    border-radius: 999px;
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border: 2px solid var(--sl-color-gray-5, #e5e7eb);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  .name {
+    margin: 0 0 0.25rem;
+  }
+  .sub {
+    margin: 0 0 0.5rem;
+    color: var(--sl-color-gray-2, #475569);
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  .tag {
+    font-size: 0.75rem;
+    background: var(--sl-color-gray-6, #f3f4f6);
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--sl-color-gray-5, #e5e7eb);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .panel {
+    background: var(--sl-color-bg, #fff);
+    border: 1px solid var(--sl-color-gray-5, #e5e7eb);
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
+  .panel h3 {
+    margin-top: 0;
+  }
+  .list {
+    margin: 0;
+    padding-left: 1rem;
+  }
+</style>

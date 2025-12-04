@@ -1,0 +1,195 @@
+---
+title: User Profiles Module
+description: Member profiles and user management
+---
+
+import ProfileCard from "../../../../components/ProfileCard.astro";
+import ProfilePopup from "../../../../components/ProfilePopup.astro";
+import ProfilePage from "../../../../components/ProfilePage.astro";
+import ProfileSettingsPage from "../../../../components/ProfileSettingsPage.astro";
+
+## Quick Start
+
+### Prerequisites
+
+The cohera [auth module](/reference/modules/auth/)
+Or alternatively your own usermanagement that provides the user data. See [here](#configuration) how to configure that.
+
+### Adding the User Profiles module
+
+If you didn't include the User Profiles module during initial project setup, you can add it at any time:
+
+```bash
+cohera module add user-profiles
+```
+
+Each userprofile will be accessible under `/profile/{username}`
+:::note
+This would require usernames to be unique
+:::
+
+## UI
+
+### Display
+
+Display user profiles with these compontents. They automatically adapt to which fields are available depending on your [field configuration](#fields) and what the user filled out.
+
+#### Card
+
+A card preview of the profile. By default if you click on it it opens the [ProfilePopup](#popup)
+
+Example Usage:
+
+```svelte
+<ProfileCard userID="<userId>" />
+```
+
+Preview:
+
+<ProfileCard userID="mrGreenTea" />
+
+#### PopUp
+
+Example Usage:
+
+```svelte
+<ProfilePopup userID="<userId>" />
+```
+
+Preview:
+
+<ProfilePopup userID="mrGreenTea" />
+
+#### Page
+
+Example Usage:
+
+```svelte
+<ProfilePage userID="<userId>" />
+```
+
+Preview:
+
+<ProfilePage userID="ada" />
+
+### Settings
+
+#### Page
+
+A settings page where users can edit their own profile information (picture, first name, last name, bio, etc.). The available fields depend on your [field configuration](#fields).
+
+Example Usage:
+
+```svelte
+<ProfileSettingsPage />
+```
+
+Preview:
+
+<ProfileSettingsPage />
+
+The settings page automatically:
+
+- Shows only fields that are `required` or `optional` in your configuration
+- Validates required fields before saving
+- Handles image uploads for profile pictures
+- Provides feedback on save success/errors
+
+:::note
+Users can only edit their own profile. The component automatically uses the currently authenticated user's ID.
+:::
+
+## Configuration
+
+### Fields
+
+Configure what fields to use. Each field can be `required`, `optional` or `disabled`.
+
+Example in `cohera.config.ts`:
+
+```ts
+export default {
+  userProfiles: {
+    fields: {
+      firstName: "required",
+      lastName: "required",
+      picture: "optional",
+      bio: "disabled",
+    },
+  },
+};
+```
+
+### Profile Actions
+
+Configure which actions appear on profile components (popup and page). Actions are automatically available based on enabled modules, or you can define custom actions.
+
+Example in `cohera.config.ts`:
+
+```ts
+export default {
+  userProfiles: {
+    actions: {
+      // Use built-in module actions
+      message: cohera.chat.messageAction,
+      follow: cohera.connections.followAction,
+      invite: cohera.events.inviteAction,
+
+      // Disable an action
+      message: false,
+
+      // Define custom action
+      custom: {
+        label: "Custom Action",
+        icon: "custom-icon", // optional
+        handler: async (userId) => {
+          // Your custom logic here
+          console.log(`Action triggered for user: ${userId}`);
+        },
+      },
+    },
+  },
+};
+```
+
+**Available built-in actions:**
+
+- `cohera.chat.messageAction` - Send a message (requires [chat module](/reference/modules/chat/))
+- `cohera.connections.followAction` - Follow/unfollow user (requires [connections module](/reference/modules/connections/))
+- `cohera.events.inviteAction` - Invite to event (requires [events module](/reference/modules/events/))
+
+### Profile access control and privacy
+
+Configure privacy defaults and what the users can change themselves.
+
+### Connect to custom usermanagement
+
+`cohera.config.ts`
+
+```ts
+export default {
+    userData: {
+        endpoint: <path or full URL>
+    }
+}
+```
+
+the endpoint should provide sth like
+
+`/users?count=<int>&offset=<int>`: list of users
+`/user/<username>`
+
+```json
+{
+  "userId": "mrGreenTea",
+  "firstName": "John",
+  "lastName": "Doe",
+  "picture": "/files/images/mrGreenTea.webp", //path or full URL
+  "bio": "I love donuts!!",
+  "groups": ["admin", "soccer-player"]
+}
+```
+
+:::note
+what about `trpc`
+:::
