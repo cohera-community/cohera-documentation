@@ -7,16 +7,12 @@ import ProfileCard from "../../../../components/ProfileCard.astro";
 import ProfilePopup from "../../../../components/ProfilePopup.astro";
 import ProfilePage from "../../../../components/ProfilePage.astro";
 
-:::note
-This documentation needs to be created. Track progress at [COH-12](https://linear.app/cohera/issue/COH-12/document-all-first-party-modules).
-:::
-
 ## Quick Start
 
 ### Prerequisites
 
 The cohera [auth module](/reference/modules/auth/)
-Or alternativly your own usermanagement that provides the user data. See [here](#configuration) how to configure that.
+Or alternatively your own usermanagement that provides the user data. See [here](#configuration) how to configure that.
 
 ### Adding the User Profiles module
 
@@ -28,7 +24,7 @@ cohera module add user-profiles
 
 Each userprofile will be accessible under `/profile/{username}`
 :::note
-This would requie usernames to be unique
+This would require usernames to be unique
 :::
 
 ## UI
@@ -73,9 +69,70 @@ Preview:
 
 ## Configuration
 
+### Fields
+
+Configure what fields to use. Each field can be `required`, `optional` or `disabled`.
+
+Example in `cohera.config.ts`:
+
+```ts
+export default {
+  userProfiles: {
+    fields: {
+      firstName: "required",
+      lastName: "required",
+      picture: "optional",
+      bio: "disabled",
+    },
+  },
+};
+```
+
+### Profile Actions
+
+Configure which actions appear on profile components (popup and page). Actions are automatically available based on enabled modules, or you can define custom actions.
+
+Example in `cohera.config.ts`:
+
+```ts
+export default {
+  userProfiles: {
+    actions: {
+      // Use built-in module actions
+      message: cohera.chat.messageAction,
+      follow: cohera.connections.followAction,
+      invite: cohera.events.inviteAction,
+
+      // Disable an action
+      message: false,
+
+      // Define custom action
+      custom: {
+        label: "Custom Action",
+        icon: "custom-icon", // optional
+        handler: async (userId) => {
+          // Your custom logic here
+          console.log(`Action triggered for user: ${userId}`);
+        },
+      },
+    },
+  },
+};
+```
+
+**Available built-in actions:**
+
+- `cohera.chat.messageAction` - Send a message (requires [chat module](/reference/modules/chat/))
+- `cohera.connections.followAction` - Follow/unfollow user (requires [connections module](/reference/modules/connections/))
+- `cohera.events.inviteAction` - Invite to event (requires [events module](/reference/modules/events/))
+
+### Profile access control and privacy
+
+Configure privacy defaults and what the users can change themselves.
+
 ### Connect to custom usermanagement
 
-`coher.config.ts`
+`cohera.config.ts`
 
 ```ts
 export default {
@@ -85,7 +142,7 @@ export default {
 }
 ```
 
-the endpoint shoul provide sth like
+the endpoint should provide sth like
 
 `/users?count=<int>&offset=<int>`: list of users
 `/user/<username>`
