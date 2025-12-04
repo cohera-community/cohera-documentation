@@ -1,4 +1,10 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, text, timestamp, uuid } from "drizzle-orm/pg-core";
+
+export const visibilityEnum = pgEnum("visibility", [
+  "private",
+  "local",
+  "global",
+]);
 
 export const posts = pgTable("posts", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -15,6 +21,7 @@ export const posts = pgTable("posts", {
   // Federation fields (optional)
   activityPubId: text("activitypub_id"),
   federatedAt: timestamp("federated_on", { mode: "date", precision: 3 }),
+  visibility: visibilityEnum(),
 });
 
 export type Post = typeof posts.$inferSelect;
