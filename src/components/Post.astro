@@ -1,0 +1,473 @@
+---
+import { seededRandom } from "../utils/random";
+
+interface Event {
+  title: string;
+  date: string;
+  time?: string;
+  location?: string;
+  description?: string;
+  rsvpRequired?: string;
+  coverImage?: string;
+}
+
+interface Props {
+  author: string;
+  content: string;
+  reactions: string[];
+  selectedReaction?: string;
+  timestamp?: string;
+  commentCount?: number;
+  seed?: number;
+  image?: string;
+  url?: string;
+  event?: Event;
+}
+
+const {
+  author,
+  content,
+  reactions,
+  selectedReaction,
+  timestamp = "2 hours ago",
+  commentCount = 0,
+  seed = 1,
+  image,
+  url,
+  event,
+} = Astro.props;
+
+const random = seededRandom(seed);
+
+// Extract YouTube video ID from URL
+const getYouTubeEmbedId = (url: string | undefined) => {
+  if (!url) return null;
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  return match ? match[1] : null;
+};
+
+// Extract GitHub repo info from URL
+const getGitHubRepoInfo = (url: string | undefined) => {
+  if (!url) return null;
+  const match = url.match(/github\.com\/([^\/]+)\/([^\/\s?#]+)/);
+  if (!match) return null;
+  return {
+    owner: match[1],
+    repo: match[2],
+    url: `https://github.com/${match[1]}/${match[2]}`,
+  };
+};
+
+const youtubeId = getYouTubeEmbedId(url);
+const githubInfo = getGitHubRepoInfo(url);
+
+// Render @mentions as styled links
+const renderContent = (text: string) => {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part) => {
+    if (part.startsWith("@")) {
+      return { type: "mention", text: part };
+    }
+    return { type: "text", text: part };
+  });
+};
+
+const contentParts = renderContent(content);
+---
+
+<div class="post-container not-content">
+  <!-- Header: Author and timestamp -->
+  <div class="post-header">
+    <div class="avatar">
+      {author.charAt(0).toUpperCase()}
+    </div>
+    <div>
+      <div class="author-name">{author}</div>
+      <div class="timestamp">{timestamp}</div>
+    </div>
+  </div>
+
+  <!-- Post image (if provided) -->
+  {image && <img src={image} alt="" class="post-image" />}
+
+  <!-- YouTube embed (if URL provided) -->
+  {
+    youtubeId && (
+      <div class="youtube-embed">
+        <iframe
+          src={`https://www.youtube.com/embed/${youtubeId}`}
+          title="YouTube video player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        />
+      </div>
+    )
+  }
+
+  <!-- GitHub link preview (if GitHub URL provided) -->
+  {
+    githubInfo && (
+      <a
+        href={githubInfo.url}
+        class="github-preview"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <div class="github-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+          >
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+          </svg>
+        </div>
+        <div class="github-info">
+          <div class="github-owner">{githubInfo.owner}</div>
+          <div class="github-repo">{githubInfo.repo}</div>
+        </div>
+      </a>
+    )
+  }
+
+  <!-- Event card (if event provided) -->
+  {
+    event && (
+      <div class="event-card">
+        {event.coverImage && (
+          <img src={event.coverImage} alt="" class="event-cover" />
+        )}
+        <div class="event-content">
+          <div class="event-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <div class="event-details">
+            <div class="event-title">{event.title}</div>
+            <div class="event-datetime">
+              📅 {event.date}
+              {event.time && ` at ${event.time}`}
+            </div>
+            {event.location && (
+              <div class="event-location">📍 {event.location}</div>
+            )}
+            {event.description && (
+              <div class="event-description">{event.description}</div>
+            )}
+            {event.rsvpRequired && (
+              <div class="event-rsvp">RSVP: {event.rsvpRequired}</div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  <!-- Post content with @mentions -->
+  <div class="post-content">
+    {
+      contentParts.map((part) =>
+        part.type === "mention" ? (
+          <a href="#" class="mention">
+            {part.text}
+          </a>
+        ) : (
+          part.text
+        ),
+      )
+    }
+  </div>
+
+  <!-- Reactions -->
+  {
+    reactions?.length > 0 && (
+      <div class="reactions">
+        {reactions.map((emoji) => (
+          <button
+            class:list={[
+              "reaction-button",
+              emoji === selectedReaction && "highlighted",
+            ]}
+          >
+            <span>{emoji}</span>
+            <span class="count">{random(1, 9)}</span>
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  <!-- Comment count -->
+  {
+    commentCount > 0 && (
+      <div class="comment-count">
+        💬 {commentCount} {commentCount === 1 ? "comment" : "comments"}
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .post-container {
+    border: 1px solid var(--sl-color-hairline-light);
+    border-radius: 8px;
+    padding: 16px;
+    background-color: var(--sl-color-black);
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+    max-width: 600px;
+  }
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--sl-color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sl-color-text-invert);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .author-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--sl-color-text);
+  }
+
+  .timestamp {
+    font-size: 12px;
+    color: var(--sl-color-gray-3);
+  }
+
+  .post-image {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .youtube-embed {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    margin-bottom: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .youtube-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .github-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--sl-color-hairline-light);
+    border-radius: 8px;
+    background-color: var(--sl-color-gray-6);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .github-preview:hover {
+    background-color: var(--sl-color-hairline-light);
+    border-color: var(--sl-color-accent);
+  }
+
+  .github-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--sl-color-text);
+    flex-shrink: 0;
+  }
+
+  .github-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .github-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .github-owner {
+    font-size: 12px;
+    color: var(--sl-color-gray-3);
+  }
+
+  .github-repo {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sl-color-accent);
+  }
+
+  .event-card {
+    border: 1px solid var(--sl-color-hairline-light);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background-color: var(--sl-color-gray-6);
+    overflow: hidden;
+  }
+
+  .event-cover {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .event-content {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .event-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    color: var(--sl-color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .event-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .event-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .event-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--sl-color-text);
+    margin-bottom: 8px;
+  }
+
+  .event-datetime,
+  .event-location {
+    font-size: 13px;
+    color: var(--sl-color-gray-3);
+    margin-bottom: 4px;
+  }
+
+  .event-description {
+    font-size: 13px;
+    color: var(--sl-color-text);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .event-rsvp {
+    font-size: 12px;
+    color: var(--sl-color-accent);
+    font-weight: 600;
+    margin-top: 8px;
+    padding: 4px 8px;
+    background-color: var(--sl-color-black);
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  .post-content {
+    text-wrap: balance;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--sl-color-text);
+    margin-bottom: 12px;
+  }
+
+  .mention {
+    color: var(--sl-color-accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .mention:hover {
+    text-decoration: underline;
+  }
+
+  .reactions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .reaction-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid var(--sl-color-hairline-light);
+    border-radius: 16px;
+    background-color: var(--sl-color-black);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .reaction-button.highlighted {
+    background-color: var(--sl-color-accent-low);
+  }
+
+  .reaction-button:hover {
+    background-color: var(--sl-color-accent-low);
+    border-color: var(--sl-color-accent);
+  }
+
+  .count {
+    font-size: 12px;
+    color: var(--sl-color-gray-3);
+  }
+
+  .comment-count {
+    font-size: 13px;
+    color: var(--sl-color-gray-3);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--sl-color-hairline-light);
+  }
+</style>

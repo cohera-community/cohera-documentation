@@ -1,0 +1,91 @@
+---
+interface Props {
+  reactions: string[];
+  counts?: Record<string, number>;
+  userReaction?: string;
+}
+
+const { reactions, counts = {}, userReaction } = Astro.props;
+
+// Generate count for each reaction if not provided
+const getCount = (emoji: string) => {
+  if (counts[emoji] !== undefined) {
+    return counts[emoji];
+  }
+  // Generate random count for demo purposes
+  return Math.floor(Math.random() * 15) + 1;
+};
+
+const isHighlighted = (emoji: string) => {
+  return userReaction === emoji;
+};
+---
+
+<div class="reaction-picker not-content">
+  {
+    reactions.map((emoji) => (
+      <button
+        class:list={["reaction-button", isHighlighted(emoji) && "highlighted"]}
+      >
+        <span class="emoji">{emoji}</span>
+        <span class="count">{getCount(emoji)}</span>
+      </button>
+    ))
+  }
+</div>
+
+<style>
+  .reaction-picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+
+  .reaction-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid var(--sl-color-hairline-light);
+    border-radius: 16px;
+    background-color: var(--sl-color-black);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    min-width: 52px;
+  }
+
+  .reaction-button.highlighted {
+    background-color: var(--sl-color-accent-low);
+    border-color: var(--sl-color-accent);
+  }
+
+  .reaction-button:hover {
+    background-color: var(--sl-color-gray-6);
+    border-color: var(--sl-color-accent);
+    transform: translateY(-1px);
+  }
+
+  .reaction-button.highlighted:hover {
+    background-color: var(--sl-color-accent-low);
+  }
+
+  .emoji {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .count {
+    font-size: 12px;
+    color: var(--sl-color-gray-3);
+    font-weight: 500;
+  }
+
+  .reaction-button.highlighted .count {
+    color: var(--sl-color-accent);
+  }
+</style>

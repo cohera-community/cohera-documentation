@@ -1,0 +1,33 @@
+---
+interface Props {
+  label?: string;
+}
+
+const { label } = Astro.props;
+---
+
+<div class="component-preview not-content" data-pagefind-ignore="true">
+  {label && <div class="preview-label">{label}</div>}
+  <slot />
+</div>
+
+<style>
+  .component-preview {
+    padding: 1rem;
+    background-color: var(--sl-color-gray-6);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    margin: 1rem 0;
+  }
+
+  .preview-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sl-color-text);
+    margin-bottom: 0.75rem;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+</style>
