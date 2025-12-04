@@ -6,6 +6,7 @@ description: Member profiles and user management
 import ProfileCard from "../../../../components/ProfileCard.astro";
 import ProfilePopup from "../../../../components/ProfilePopup.astro";
 import ProfilePage from "../../../../components/ProfilePage.astro";
+import ProfileSettingsPage from "../../../../components/ProfileSettingsPage.astro";
 
 ## Quick Start
 
@@ -29,7 +30,11 @@ This would require usernames to be unique
 
 ## UI
 
-### Card
+### Display
+
+Display user profiles with these compontents. They automatically adapt to which fields are available depending on your [field configuration](#fields) and what the user filled out.
+
+#### Card
 
 A card preview of the profile. By default if you click on it it opens the [ProfilePopup](#popup)
 
@@ -43,7 +48,7 @@ Preview:
 
 <ProfileCard userID="mrGreenTea" />
 
-### PopUp
+#### PopUp
 
 Example Usage:
 
@@ -55,7 +60,7 @@ Preview:
 
 <ProfilePopup userID="mrGreenTea" />
 
-### Page
+#### Page
 
 Example Usage:
 
@@ -66,6 +71,33 @@ Example Usage:
 Preview:
 
 <ProfilePage userID="ada" />
+
+### Settings
+
+#### Page
+
+A settings page where users can edit their own profile information (picture, first name, last name, bio, etc.). The available fields depend on your [field configuration](#fields).
+
+Example Usage:
+
+```svelte
+<ProfileSettingsPage />
+```
+
+Preview:
+
+<ProfileSettingsPage />
+
+The settings page automatically:
+
+- Shows only fields that are `required` or `optional` in your configuration
+- Validates required fields before saving
+- Handles image uploads for profile pictures
+- Provides feedback on save success/errors
+
+:::note
+Users can only edit their own profile. The component automatically uses the currently authenticated user's ID.
+:::
 
 ## Configuration
 
