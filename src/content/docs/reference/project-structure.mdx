@@ -1,0 +1,102 @@
+---
+title: Project Structure
+description: Understanding the folder structure of a Cohera project
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+Cohera builds on the standard [SvelteKit project structure](https://svelte.dev/docs/kit/project-structure), adding directories for configuration, database schemas, and backend code.
+
+## Overview
+
+<FileTree>
+
+- my-cohera-project/
+  - src/
+    - lib/
+      - server/
+        - db/
+          - [schema.ts](#srclibserverdb) Database schemas
+        - [trpc.ts](#srclibserver) tRPC router
+      - components/ Your custom components
+    - [routes/](#srcroutes) SvelteKit routes
+  - [config/](#config)
+    - cohera.config.ts Platform configuration
+    - auth.config.ts Auth module configuration
+  - static/ Static assets
+  - package.json
+  - svelte.config.js
+  - vite.config.ts
+  - drizzle.config.ts
+
+</FileTree>
+
+## Key Directories
+
+### src/lib/server/db/
+
+Database layer. The `schema.ts` file imports and re-exports Drizzle schemas from installed modules:
+
+```typescript title="src/lib/server/db/schema.ts"
+export * from "@cohera/auth/db";
+export * from "@cohera/posts/db";
+```
+
+The [`cohera module add`](/reference/cli/#cohera-module-add) command updates this file automatically.
+
+### src/lib/server/
+
+Backend code. The `trpc.ts` file composes tRPC routers from installed modules:
+
+```typescript title="src/lib/server/trpc.ts"
+import { authRouter } from "@cohera/auth/api";
+import { postsRouter } from "@cohera/posts/api";
+
+export const appRouter = t.router({
+  auth: authRouter,
+  posts: postsRouter,
+});
+```
+
+### src/routes/
+
+Standard [SvelteKit routes](https://svelte.dev/docs/kit/routing). Create pages here that use Cohera module components and data.
+
+### config/
+
+Configuration files for the platform and installed modules:
+
+| File | Purpose |
+|------|---------|
+| `cohera.config.ts` | Platform-wide settings |
+| `auth.config.ts` | [Auth module](/reference/modules/auth/) configuration |
+
+Each module's configuration file is created when you install the module. See individual module documentation for configuration options.
+
+## Module Integration
+
+When you install a module with [`cohera module add`](/reference/cli/#cohera-module-add):
+
+1. The module package is added to `package.json`
+2. Database schema exports are added to `src/lib/server/db/schema.ts`
+3. tRPC router is added to `src/lib/server/trpc.ts`
+4. A configuration file is created in `config/`
+5. Database migrations run automatically
+
+To undo, use [`cohera module remove`](/reference/cli/#cohera-module-remove).
+
+## Custom Code
+
+Add your own code alongside module code:
+
+- **Components**: `src/lib/components/` for Svelte components
+- **Routes**: `src/routes/` for pages and API routes
+- **Server utilities**: `src/lib/server/` for backend helpers
+- **Shared types**: `src/lib/types/` for TypeScript types
+
+Cohera modules use the `@cohera/` namespace, so your code won't conflict.
+
+## See Also
+
+- [Architecture](/reference/architecture/) for how the layers work together
+- [CLI Reference](/reference/cli/) for available commands
