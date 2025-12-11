@@ -55,6 +55,32 @@ const currentUser = {
       <textarea id="bio" name="bio" rows="4">{currentUser.bio}</textarea>
     </div>
 
+    <div class="form-group">
+      <label for="visibility">Profile Visibility</label>
+      <select id="visibility" name="visibility">
+        <option value="public" selected>Public - Visible to everyone</option>
+        <option value="members-only">Members Only - Visible to authenticated users</option>
+        <option value="private">Private - Only visible to you</option>
+      </select>
+    </div>
+
+    <div class="form-section">
+      <h3>Profile Actions</h3>
+      <p class="section-description">Choose which actions appear on your profile</p>
+      
+      <div class="checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" name="action-message" checked />
+          <span>Allow others to message me</span>
+        </label>
+        
+        <label class="checkbox-label">
+          <input type="checkbox" name="action-invite" checked />
+          <span>Allow others to invite me to events</span>
+        </label>
+      </div>
+    </div>
+
     <div class="form-actions">
       <button type="submit" class="btn-primary">Save Changes</button>
       <button type="button" class="btn-secondary">Cancel</button>
@@ -78,6 +104,12 @@ const currentUser = {
     color: var(--sl-color-white);
   }
 
+  h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--sl-color-white);
+    font-size: 1rem;
+  }
+
   .settings-form {
     display: flex;
     flex-direction: column;
@@ -90,6 +122,19 @@ const currentUser = {
     gap: 0.5rem;
   }
 
+  .form-section {
+    padding: 1rem;
+    background: var(--sl-color-black);
+    border-radius: 6px;
+    border: 1px solid var(--sl-color-gray-6);
+  }
+
+  .section-description {
+    margin: 0 0 1rem 0;
+    color: var(--sl-color-gray-3);
+    font-size: 0.9rem;
+  }
+
   label {
     font-weight: 600;
     color: var(--sl-color-white);
@@ -97,7 +142,8 @@ const currentUser = {
   }
 
   input[type="text"],
-  textarea {
+  textarea,
+  select {
     padding: 0.5rem;
     border: 1px solid var(--sl-color-gray-5);
     border-radius: 4px;
@@ -108,9 +154,34 @@ const currentUser = {
   }
 
   input[type="text"]:focus,
-  textarea:focus {
+  textarea:focus,
+  select:focus {
     outline: 2px solid var(--sl-color-text-accent);
     outline-offset: 2px;
+  }
+
+  select {
+    cursor: pointer;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
   }
 
   .picture-upload {
