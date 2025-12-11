@@ -1,0 +1,155 @@
+---
+import type { ImageMetadata } from "astro";
+
+interface Props {
+  userID: string;
+}
+const { userID } = Astro.props as Props;
+
+const users: Record<
+  string,
+  {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    picture: ImageMetadata;
+    bio: string;
+    groups: string[];
+  }
+> = {
+  mrGreenTea: {
+    userId: "mrGreenTea",
+    firstName: "John",
+    lastName: "Doe",
+    picture: (await import("../assets/profile-picture.jpg")).default,
+    bio: "I love donuts!!",
+    groups: ["admin", "soccer-player"],
+  },
+  ada: {
+    userId: "ada",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    picture: (await import("../assets/profile-picture2.jpg")).default,
+    bio: "Mathematician and early programmer.",
+    groups: ["historian", "writer"],
+  },
+};
+
+const user = users[userID] ?? users.mrGreenTea;
+---
+
+<div
+  class="overlay not-content"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Profile popup"
+>
+  <div class="popup">
+    <button class="close" aria-label="Close">×</button>
+    <header class="header">
+      <img
+        class="avatar"
+        src={user.picture.src}
+        alt=""
+        width="80"
+        height="80"
+      />
+      <div>
+        <h3 class="name">{user.firstName} {user.lastName}</h3>
+        <div class="tags">
+          {
+            user.groups.map((g) => (
+              <span class="tag" data-tag={g}>
+                {g}
+              </span>
+            ))
+          }
+        </div>
+      </div>
+    </header>
+    <p class="bio">{user.bio}</p>
+    <footer class="actions">
+      <button class="btn primary">Follow</button>
+      <button class="btn">Message</button>
+    </footer>
+  </div>
+</div>
+
+<style>
+  .overlay {
+    position: relative;
+    padding: 1rem;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.05),
+      rgba(0, 0, 0, 0)
+    );
+    border-radius: 0.5rem;
+  }
+  .popup {
+    position: relative;
+    margin: 0 auto;
+    max-width: 640px;
+    background: var(--sl-color-bg, #fff);
+    border: 1px solid var(--sl-color-gray-5, #e5e7eb);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+  .close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    border: 1px solid var(--sl-color-gray-5, #e5e7eb);
+    background: var(--sl-color-gray-6, #f3f4f6);
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    cursor: default; /* static preview */
+  }
+  .header {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  .avatar {
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+  }
+  .name {
+    margin: 0 0 0.25rem;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  .tag {
+    font-size: 0.75rem;
+    background: var(--sl-color-gray-6, #f3f4f6);
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--sl-color-gray-5, #e5e7eb);
+  }
+  .bio {
+    margin: 0.75rem 0 1rem;
+    color: var(--sl-color-gray-2, #475569);
+  }
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .btn {
+    border: 1px solid var(--sl-color-gray-5, #e5e7eb);
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--sl-color-gray-6, #f3f4f6);
+  }
+  .btn.primary {
+    background: #2563eb;
+    border-color: #1e40af;
+    color: white;
+  }
+</style>

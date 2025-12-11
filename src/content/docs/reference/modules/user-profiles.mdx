@@ -1,0 +1,260 @@
+---
+title: User Profiles Module
+description: Member profiles and user management
+---
+
+import ProfileCard from "../../../../components/ProfileCard.astro";
+import ProfilePopup from "../../../../components/ProfilePopup.astro";
+import ProfilePage from "../../../../components/ProfilePage.astro";
+import ProfileSettingsPage from "../../../../components/ProfileSettingsPage.astro";
+
+## Quick Start
+
+### Prerequisites
+
+The cohera [auth module](/reference/modules/auth/)
+Or alternatively your own usermanagement that provides the user data. See [here](#configuration) how to configure that.
+
+### Adding the User Profiles module
+
+If you didn't include the User Profiles module during initial project setup, you can add it at any time:
+
+```bash
+cohera module add user-profiles
+```
+
+Each userprofile will be accessible under `/profile/{username}`
+:::note
+This would require usernames to be unique
+:::
+
+## UI
+
+### Display
+
+Display user profiles with these components. They automatically adapt to which fields are available depending on your [field configuration](#fields) and what the user filled out.
+
+You can use these components in two ways:
+- Pass a `userID` and let the component fetch the user data
+- Pass the field values directly (`firstName`, `lastName`, `picture`, `bio`, etc.)
+
+#### Card
+
+A card preview of the profile. By default if you click on it it opens the [ProfilePopup](#popup)
+
+Example Usage:
+
+```svelte
+<!-- With userID - component fetches the data -->
+<ProfileCard userID="<userId>" />
+
+<!-- With direct field values -->
+<ProfileCard 
+  firstName="Jane"
+  lastName="Smith"
+  picture="/images/jane.jpg"
+  bio="Software engineer"
+/>
+```
+
+Preview:
+
+<ProfileCard userID="mrGreenTea" />
+
+#### PopUp
+
+Example Usage:
+
+```svelte
+<!-- With userID - component fetches the data -->
+<ProfilePopup userID="<userId>" />
+
+<!-- With direct field values -->
+<ProfilePopup 
+  firstName="Jane"
+  lastName="Smith"
+  picture="/images/jane.jpg"
+  bio="Software engineer"
+/>
+```
+
+Preview:
+
+<ProfilePopup userID="mrGreenTea" />
+
+#### Page
+
+Example Usage:
+
+```svelte
+<!-- With userID - component fetches the data -->
+<ProfilePage userID="<userId>" />
+
+<!-- With direct field values -->
+<ProfilePage 
+  firstName="Jane"
+  lastName="Smith"
+  picture="/images/jane.jpg"
+  bio="Software engineer"
+  location="New York, US"
+  website="https://janesmith.dev"
+/>
+```
+
+Preview:
+
+<ProfilePage userID="ada" />
+
+### Settings
+
+#### Page
+
+A settings page where users can edit their own profile information (picture, first name, last name, bio, etc.) and privacy settings.
+
+Example Usage:
+
+```svelte
+<ProfileSettingsPage />
+```
+
+Preview:
+
+<ProfileSettingsPage />
+
+The settings page automatically:
+
+- Shows only fields that are `required` or `optional` in your [configuration](#fields)
+- Validates required fields before saving
+- Handles image uploads for profile pictures
+- Provides feedback on save success/errors
+
+:::note
+Users can only edit their own profile. The component automatically uses the currently authenticated user's ID.
+:::
+
+## Configuration
+
+### Fields
+
+Configure what fields to use and their privacy settings. Each field can be `required`, `optional` or `disabled`.
+
+Example in `cohera.config.ts`:
+
+```ts
+export default {
+  userProfiles: {
+    fields: {
+      firstName: {
+        requirement: "required",
+        defaultVisibility: "public",
+        allowUserControl: false, // Users cannot change visibility
+      },
+      lastName: {
+        requirement: "required",
+        defaultVisibility: "public",
+        allowUserControl: false,
+      },
+      picture: {
+        requirement: "optional",
+        defaultVisibility: "public",
+        allowUserControl: true, // Users can change visibility
+      },
+      bio: {
+        requirement: "optional",
+        defaultVisibility: "members-only",
+        allowUserControl: true,
+      },
+      email: {
+        requirement: "optional",
+        defaultVisibility: "private",
+        allowUserControl: true,
+      },
+      location: "optional", // Shorthand: optional with public visibility, user can control
+    },
+  },
+};
+```
+
+**Field configuration options:**
+
+- `requirement` - `"required"`, `"optional"`, or `"disabled"`
+- `defaultVisibility` - `"public"`, `"members-only"`, or `"private"` (default: `"public"`)
+- `allowUserControl` - Whether users can change the field's visibility (default: `true`)
+
+**Shorthand:** You can use a string value (e.g., `"optional"`) which defaults to public visibility with user control enabled.
+
+**Visibility levels:**
+- `public` - Visible to everyone, including non-authenticated users
+- `members-only` - Only visible to authenticated community members
+- `private` - Only visible to the user themselves
+
+### Profile Actions
+
+Configure which actions appear on profile components (popup and page). Actions are automatically available based on enabled modules, or you can define custom actions.
+
+Example in `cohera.config.ts`:
+
+```ts
+export default {
+  userProfiles: {
+    actions: {
+      // Use built-in module actions
+      message: cohera.chat.messageAction,
+      follow: cohera.connections.followAction,
+      invite: cohera.events.inviteAction,
+
+      // Disable an action
+      message: false,
+
+      // Define custom action
+      custom: {
+        label: "Custom Action",
+        icon: "custom-icon", // optional
+        handler: async (userId) => {
+          // Your custom logic here
+          console.log(`Action triggered for user: ${userId}`);
+        },
+      },
+    },
+  },
+};
+```
+
+**Available built-in actions:**
+
+- `cohera.chat.messageAction` - Send a message (requires [chat module](/reference/modules/chat/))
+- `cohera.connections.followAction` - Follow/unfollow user (requires [connections module](/reference/modules/connections/))
+- `cohera.events.inviteAction` - Invite to event (requires [events module](/reference/modules/events/))
+
+### Connect to custom usermanagement
+
+:::note
+This is for when you have your own user management but still want to use the cohera user-profiles module backend to store profile data and handle privacy settings. Otherwise you can use only the [UI components](#ui) and pass the values directly.
+:::
+
+Configure your authentication endpoint in `cohera.config.ts`:
+
+```ts
+export default {
+  userProfiles: {
+    auth: {
+      endpoint: "https://your-auth-service.com/verify",
+      // Optional: Custom headers to send with verification requests
+      headers: {
+        "X-API-Key": process.env.AUTH_API_KEY,
+      },
+    },
+  },
+};
+```
+
+The cohera user-profiles backend will call your endpoint to verify user sessions. Your endpoint should return user data in this format:
+
+```ts
+{
+  userId: string;
+  username: string;
+  // Any additional fields you want to sync
+}
+```
+

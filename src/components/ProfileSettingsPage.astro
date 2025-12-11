@@ -1,0 +1,234 @@
+---
+import type { ImageMetadata } from "astro";
+
+// Sample data for docs preview only
+const currentUser = {
+  userId: "ada",
+  firstName: "Ada",
+  lastName: "Lovelace",
+  picture: (await import("../assets/profile-picture2.jpg")).default,
+  bio: "Mathematician and early programmer.",
+};
+---
+
+<section class="profile-settings not-content">
+  <h2>Profile Settings</h2>
+  <form class="settings-form">
+    <div class="form-group">
+      <label for="picture">Profile Picture</label>
+      <div class="picture-upload">
+        <img
+          class="avatar-preview"
+          src={currentUser.picture.src}
+          alt="Current profile picture"
+          width="96"
+          height="96"
+        />
+        <input type="file" id="picture" name="picture" accept="image/*" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="firstName">First Name *</label>
+      <input
+        type="text"
+        id="firstName"
+        name="firstName"
+        value={currentUser.firstName}
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="lastName">Last Name *</label>
+      <input
+        type="text"
+        id="lastName"
+        name="lastName"
+        value={currentUser.lastName}
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="bio">Bio</label>
+      <textarea id="bio" name="bio" rows="4">{currentUser.bio}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="visibility">Profile Visibility</label>
+      <select id="visibility" name="visibility">
+        <option value="public" selected>Public - Visible to everyone</option>
+        <option value="members-only">Members Only - Visible to authenticated users</option>
+        <option value="private">Private - Only visible to you</option>
+      </select>
+    </div>
+
+    <div class="form-section">
+      <h3>Profile Actions</h3>
+      <p class="section-description">Choose which actions appear on your profile</p>
+      
+      <div class="checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" name="action-message" checked />
+          <span>Allow others to message me</span>
+        </label>
+        
+        <label class="checkbox-label">
+          <input type="checkbox" name="action-invite" checked />
+          <span>Allow others to invite me to events</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save Changes</button>
+      <button type="button" class="btn-secondary">Cancel</button>
+    </div>
+  </form>
+</section>
+
+<style>
+  .profile-settings {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: var(--sl-color-bg-nav);
+    border-radius: 8px;
+    border: 1px solid var(--sl-color-gray-5);
+  }
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--sl-color-white);
+  }
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--sl-color-white);
+    font-size: 1rem;
+  }
+
+  .settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-section {
+    padding: 1rem;
+    background: var(--sl-color-black);
+    border-radius: 6px;
+    border: 1px solid var(--sl-color-gray-6);
+  }
+
+  .section-description {
+    margin: 0 0 1rem 0;
+    color: var(--sl-color-gray-3);
+    font-size: 0.9rem;
+  }
+
+  label {
+    font-weight: 600;
+    color: var(--sl-color-white);
+    font-size: 0.9rem;
+  }
+
+  input[type="text"],
+  textarea,
+  select {
+    padding: 0.5rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 4px;
+    background: var(--sl-color-black);
+    color: var(--sl-color-white);
+    font-family: inherit;
+    font-size: 1rem;
+  }
+
+  input[type="text"]:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid var(--sl-color-text-accent);
+    outline-offset: 2px;
+  }
+
+  select {
+    cursor: pointer;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+  }
+
+  .picture-upload {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .avatar-preview {
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  input[type="file"] {
+    color: var(--sl-color-white);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  button {
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--sl-color-text-accent);
+    color: var(--sl-color-black);
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-secondary {
+    background: var(--sl-color-gray-5);
+    color: var(--sl-color-white);
+  }
+
+  .btn-secondary:hover {
+    background: var(--sl-color-gray-4);
+  }
+</style>
